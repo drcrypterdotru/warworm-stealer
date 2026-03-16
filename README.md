@@ -423,11 +423,10 @@ Open web browser to: `http://127.0.0.1:5000`
 <div align="center">
 
   <a href="https://t.me/burnwpcommunity">
-    <img src="https://camo.githubusercontent.com/d709d0b7115c846691182ffa7f5388780ccaa78b8a446f7f9c90d824c3ad839a/68747470733a2f2f75706c6f61642e77696b696d656469612e6f72672f77696b6970656469612f636f6d6d6f6e732f7468756d622f382f38322f54656c656772616d5f6c6f676f2e7376672f32323070782d54656c656772616d5f6c6f676f2e7376672e706e67"
-         alt="Join on Telegram"
-         width="80" />
+    <img src="https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg"
+        alt="Join on Telegram"
+        width="80">
   </a>
-
   **Join Telegram:** https://t.me/burnwpcommunity
 
   <br/><br/>
