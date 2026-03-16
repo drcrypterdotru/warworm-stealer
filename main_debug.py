@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 """
-Sentinel Main Module v4.7 - Fully Fixed
 - Discord tokens: block parsing from Discord_Accounts.txt
 - Network scanner: built‑in, no external dependencies
 - All validations read actual files; report shows real data
