@@ -60,34 +60,6 @@ Warworm Stealer a **builder-stub architecture** with three primary components:
 
 # 🛡️ Warworm Stealer Feature Details 
 
-
-## 📸 Screenshots of Feature 
-<table>
-  <tr>
-    <td><img src="screenshots/webui_1.png" alt="Screenshot_1"></td>
-    <td><img src="screenshots/webui_2.png" alt="Screenshot_2"></td>
-    <td><img src="screenshots/webui_3.png" alt="Screenshot_3"></td>
-  </tr>
-</table>
-
-## 🧾 Report Samples
-
-<table>
-  <tr>
-    <td><img src="screenshots/report_data1.png" alt="Report 1"></td>
-    <td><img src="screenshots/report_data2.png" alt="Report 2"></td>
-    <td><img src="screenshots/report_data3.png" alt="Report 3"></td>
-  </tr>
-</table>
-
-<td><img src="screenshots/report_data4.png" alt="Delivery to Telegram"></td>
- 
----
-
-## 🎥 Demo Video
-
-[![Watch SKYNET Demo](screenshots/demo_video.png)](https://t.me/burnwpcommunity/12975)
-
 <details>
 <summary>🧠 ➤ 1. Information Gathering Module</summary>
 
@@ -269,6 +241,36 @@ Country_IP_Hostname.zip
 - HTML report
 
 </details>
+
+
+## 📸 Screenshots of Feature 
+<table>
+  <tr>
+    <td><img src="screenshots/webui_1.png" alt="Screenshot_1"></td>
+    <td><img src="screenshots/webui_2.png" alt="Screenshot_2"></td>
+    <td><img src="screenshots/webui_3.png" alt="Screenshot_3"></td>
+  </tr>
+</table>
+
+## 🧾 Report Samples
+
+<table>
+  <tr>
+    <td><img src="screenshots/report_data1.png" alt="Report 1"></td>
+    <td><img src="screenshots/report_data2.png" alt="Report 2"></td>
+    <td><img src="screenshots/report_data3.png" alt="Report 3"></td>
+  </tr>
+</table>
+
+<td><img src="screenshots/report_data4.png" alt="Delivery to Telegram"></td>
+ 
+---
+
+## 🎥 Demo Video
+
+[![Watch SKYNET Demo](screenshots/demo_video.png)](https://t.me/burnwpcommunity/12975)
+
+---
 
 
 ## Project Structure
