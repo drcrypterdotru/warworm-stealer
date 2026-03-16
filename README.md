@@ -427,6 +427,7 @@ Open web browser to: `http://127.0.0.1:5000`
         alt="Join on Telegram"
         width="80">
   </a>
+
   **Join Telegram:** https://t.me/burnwpcommunity
 
   <br/><br/>
