@@ -60,187 +60,21 @@ Warworm Stealer a **builder-stub architecture** with three primary components:
 
 # 🛡️ Warworm Stealer Feature Details 
 
-<details>
-<summary>🧠 ➤ 1. Information Gathering Module</summary>
-
-**Purpose:** System reconnaissance and environment fingerprinting
-
-### Capabilities
-- 💻 Hardware enumeration (CPU, RAM, storage)
-- 🖥️ Operating system identification
-- 🌐 Network configuration analysis
-- 📍 Public IP geolocation
-- 👤 Active user session identification
-- 📦 Installed software inventory
-
-### Output Format
-Structured text report containing system metrics and environment details.
-
-</details>
-
 ---
 
-<details>
-<summary>🔐 ➤ 2. Credential Access Module</summary>
+## ⚙️ Modules Summary
 
-**Purpose:** Authentication material extraction from various storage mechanisms
-
-### Browser Credential Extractor
-
-**Target Applications**
-- Chrome
-- Edge
-- Firefox
-- Brave
-- Opera
-- Opera GX
-- Vivaldi
-- Yandex
-
-**Data Sources**
-- Login databases
-- Cookie stores
-- Preference files
-
-**Extraction Method**
-SQLite database parsing and decryption
-
-**Output**
-URL, username, password triplets in structured format
-
-### Wireless Credential Recovery
-
-**Target**
-Windows WLAN profiles
-
-**Method**
-Netsh command-line interface interaction
-
-**Output**
-SSID, authentication type, and plaintext password
-
-### Session Token Extraction
-
-**Discord**
-Local storage and process memory analysis
-
-**Telegram**
-Desktop client session file copying
-
-**Output**
-Account identifiers, tokens, and session metadata
-
-</details>
+| ⚙️ Module | 🎯 Purpose | 🔑 Key Highlights |
+|----------|-----------|------------------|
+| 🧠 **Info Gathering** | System profiling | Hardware, OS, IP, users, installed apps |
+| 🔐 **Credential Access** | Extract sensitive data | Browser passwords, WiFi creds, session tokens |
+| 📸 **Surveillance** | Monitor environment | Screenshots, active windows, multi-monitor |
+| 🌐 **Network Ops (Worm)** | Spread & scan network | Host discovery, port scanning, brute-force services (FTP, SSH, Telnet, SMB, RDP) |
+| 💰 **Crypto Clipper** | Hijack transactions | Replaces crypto wallet addresses (BTC, ETH, XMR, LTC, DOGE) |
+| 🔁 **Persistence** | Maintain access | Registry, startup, scheduled tasks |
+| 📤 **Exfiltration** | Send collected data | Telegram / Discord delivery |
 
 ---
-
-<details>
-<summary>📸 ➤ 3. Surveillance Module</summary>
-
-**Purpose:** Real-time environment capture
-
-### Capabilities
-- 🖥️ Full desktop screenshot capture
-- 🪟 Active window enumeration
-- 🖥️ Display configuration analysis
-- 🖥️ Multi-monitor support
-
-</details>
-
----
-
-<details>
-<summary>🌐 ➤ 4. Network Operations Module (Worm Network)</summary>
-
-**Purpose:** Lateral movement reconnaissance and service interaction
-
-### Network Discovery
-- Local subnet enumeration (/24 default)
-- ICMP host discovery (ping sweeps)
-- Hostname resolution
-- Gateway identification
-
-### Port Scanning
-- **Technique:** Multi-threaded TCP connect scanning
-- **Default Ports:** 21 (FTP), 22 (SSH), 23 (Telnet), 445 (SMB), 3389 (RDP)
-- **Configurable:** Custom port addition via dashboard
-- **Concurrency:** 50-thread pool with timeout management
-
-### Service Authentication Testing
-- SSH 
-- FTP 
-- Telnet
-- SMB 
-- RDP 
-
-Credential sources include common default credential dictionaries.
-
-"You can modify worm_network.py (line 41) to add more users and passwords."
-
-</details>
-
----
-
-<details>
-<summary>💰 ➤ 5. Cryptocurrency Clipper</summary>
-
-**Purpose:** Demonstrates clipboard-based address substitution risks (Redirect to new attacker address wallet)
-
-### Supported Currencies
-- Bitcoin (BTC)
-- Ethereum (ETH)
-- Litecoin (LTC)
-- Monero (XMR)
-- Dogecoin (DOGE)
-
-### Operational Pattern
-1. Monitor system clipboard for address patterns
-2. Validate address checksums
-3. Replace detected addresses
-4. Maintain clipboard persistence
-
-</details>
-
----
-
-<details>
-<summary>🔁 ➤ 6. Persistence Module</summary>
-
-**Purpose:** Maintain long-term system access
-
-### Techniques
-- Windows Registry Run key modification
-- Startup folder placement
-- Scheduled task creation
-- Service installation
-
-### Stealth Features
-Randomized naming conventions and legitimate-looking paths
-
-</details>
-
----
-
-<details>
-<summary>📤 ➤ 7. Exfiltration Module</summary>
-
-**Purpose:** Transmission of collected data
-
-### Channels
-- Telegram Bot API file upload
-- Discord webhook message attachments
-
-### Archive Format
-Country_IP_Hostname.zip
-
-
-
-### Compression Contents
-- credential data
-- system information
-- HTML report
-
-</details>
 
 
 ## 📸 Screenshots of Feature 
@@ -312,32 +146,6 @@ Warworm-Stealer/
 ```
 ---
 
-## Builder Dashboard
-
-### Interface Design
-
-### Functional Sections
-
-#### 1. Build Settings Panel
-
-#### 2. Delivery Configuration
-
-#### 3. Module Selection Grid
-
-- **Information Collection**
-- **Messaging (Telegram + Discord)**
-- **Network Scanner**
-- **Worm Network (Bruteforce)**
-
-- **Crypto Clipper BTC, ETH....**
-- **Persistence (Startup)**:
-
-#### 4. Browser Target Selection
-
-#### 5. Network Configuration
-- **Brute force services Target (FTP, SSH, Telnet, SMB, RDP)**
-
----
 
 
 ### Environment Setup
