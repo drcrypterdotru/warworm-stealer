@@ -71,7 +71,7 @@ Warworm Stealer a **builder-stub architecture** with three primary components:
 | 📸 **Surveillance** | Monitor environment | Screenshots, active windows, multi-monitor |
 | 🌐 **Network Ops (Worm)** | Spread & scan network | Host discovery, port scanning, brute-force services (FTP, SSH, Telnet, SMB, RDP) |
 | 💰 **Crypto Clipper** | Hijack transactions | Replaces crypto wallet addresses (BTC, ETH, XMR, LTC, DOGE) |
-| 🔁 **Persistence** | Maintain access | Registry, startup, scheduled tasks |
+| 🔁 **Persistence** | Maintain access | Registry, startup (Startup) |
 | 📤 **Exfiltration** | Send collected data | Telegram / Discord delivery |
 
 ---
