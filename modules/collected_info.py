@@ -11,13 +11,9 @@ import os
 import uuid
 import wmi
 import subprocess
-import ctypes
-import sys
 from datetime import datetime
 from contextlib import suppress
 from PIL import ImageGrab
-import base64
-import io
 
 # IP Geolocation APIs - 10 different services for redundancy
 IP_APIS = [

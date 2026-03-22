@@ -329,6 +329,8 @@ def run_pyinstaller(build_dir, loader_path, settings):
         'shutil',
         'zipfile',
         'psutil',
+        'ctypes',
+        'ctypes.wintypes',
     ]
 
     # CRITICAL: Add cryptography DLLs for paramiko to work in PyInstaller
