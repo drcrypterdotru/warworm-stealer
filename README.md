@@ -1,4 +1,4 @@
-# 🛡️ Warworm Stealer v1.0.0
+# 🛡️ Warworm Stealer v1.3.0 (🔥NEW)
 
 > ****Developed by DRCrypter for authorized security testing and educational purposes only.**
 
@@ -61,9 +61,12 @@ Warworm Stealer a **builder-stub architecture** with three primary components:
 # 🛡️ Warworm Stealer Feature Details 
 
 ---
-
+<!-- 
 > 🆕 **v1.0.0 Update**: Introducing **Debug Telemetry** - Never miss a failure again! 
-> Every error is now logged with timestamps and delivered in `errors.txt` inside your zip.
+> Every error is now logged with timestamps and delivered in `errors.txt` inside your zip. -->
+
+> 🆕 **v1.3.0 Update**: Introducing **Remote Management** - Control client remotely via browser!  
+> Live desktop streaming, web-based file manager, and ngrok tunnel support. Features a clean WebUI dashboard with secure token authentication.
 
 ## ⚙️ Modules Summary
 
@@ -76,16 +79,31 @@ Warworm Stealer a **builder-stub architecture** with three primary components:
 | 💰 **Crypto Clipper** | Hijack transactions | Replaces crypto wallet addresses (BTC, ETH, XMR, LTC, DOGE) |
 | 🔁 **Persistence** | Maintain access | Registry, startup (Startup) |
 | 📤 **Exfiltration** | Send collected data | Telegram / Discord delivery |
-| 🔥 **Debug Telemetry** *(NEW)* | Error tracking & diagnostics | Auto-logs `errors.txt` with timestamps, included in zip delivery |
+| 🔥 **Debug Telemetry** | Error tracking & diagnostics | Auto-logs `errors.txt` with timestamps, included in zip delivery |
+| 🖥️ **Remote Management** *(NEW 1.3.0)* | Remote monitoring & control | **Remote Desktop** (real-time streaming), **File Manager** (web-based), Ngrok tunnel, unified password auth |
 ---
 
 
-## 📸 Screenshots of Feature 
+<meta timestamp="2026-04-07 01:03" />
+
+### 📸 Screenshots of Features
+
+### 🎛️ WebUI Dashboard (v1.3.0)
 <table>
   <tr>
-    <td><img src="screenshots/webui_1.png" alt="Screenshot_1"></td>
-    <td><img src="screenshots/webui_2.png" alt="Screenshot_2"></td>
-    <td><img src="screenshots/webui_3.png" alt="Screenshot_3"></td>
+    <td align="center"><b>Secure Build Dashboard</b><br><img src="screenshots/webui_1.png" alt="Dashboard Modules"></td>
+    <td align="center"><b>Build Settings</b><br><img src="screenshots/webui_2.png" alt="Builder Settings"></td>
+    <td align="center"><b>New Builder</b><br><img src="screenshots/webui_3.png" alt="New Builder"></td>
+  </tr>
+</table>
+
+### 🖥️ Remote Monitoring and Management (RMM)
+<table>
+  <tr>
+    <td align="center"><b>Remote Desktop - Live Streaming</b><br><img src="screenshots/rmm_desktop.png" alt="Remote Desktop"></td>
+    <td align="center"><b>File Manager - Web Based</b><br><img src="screenshots/rmm_filemanager.png" alt="File Manager"></td>
+    <td align="center"><b>RMM Page</b><br><img src="screenshots/rmm_login.png" alt="RMM Page"></td>
+    <td align="center"><b>Secure Authentication Login</b><br><img src="screenshots/rmm_login2.png" alt="RMM Authentication"></td>
   </tr>
 </table>
 
@@ -93,19 +111,26 @@ Warworm Stealer a **builder-stub architecture** with three primary components:
 
 <table>
   <tr>
-    <td><img src="screenshots/report_data1.png" alt="Report 1"></td>
-    <td><img src="screenshots/report_data2.png" alt="Report 2"></td>
-    <td><img src="screenshots/report_data3.png" alt="Report 3"></td>
+    <td align="center"><b>System Overview</b><br><img src="screenshots/report_data1.png" alt="Report System Info"></td>
+    <td align="center"><b>Credentials & Passwords</b><br><img src="screenshots/report_data2.png" alt="Report Passwords"></td>
+    <td align="center"><b>Network Scan Results</b><br><img src="screenshots/report_data3.png" alt="Report Network"></td>
+  </tr>
+    <tr>
+    <td align="center" colspan="3"><b>Telegram Delivery</b><br><img src="screenshots/report_data4.png" alt="Telegram Delivery"></td>
+  </tr>
+  <tr>
+    <td align="center" colspan="3"><b>Remote Access Panel (New v1.3.0)</b><br><img src="screenshots/report_data5.png" alt="RMM Access Credentials"></td>
   </tr>
 </table>
-
-<td><img src="screenshots/report_data4.png" alt="Delivery to Telegram"></td>
  
 ---
 
 ## 🎥 Demo Video
 
-[![Watch SKYNET Demo](screenshots/demo_video.png)](https://t.me/burnwpcommunity/12975)
+[![Watch WarWorm Stealer Demo](screenshots/demo_video.png)](https://t.me/burnwpcommunity/12975).
+
+[![Watch Remote Access (RMM) Demo](screenshots/second_demo.png)](https://t.me/burnwpcommunity/14951)
+
 
 ---
 
@@ -211,8 +236,9 @@ Open web browser to: `http://127.0.0.1:5000`
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.3.0 | 2026-04-07 | **Remote Monitoring Management** (Remote Desktop streaming, File Manager, Ngrok tunnel), Clean WebUI Dashboard with token auth |
+| 1.2.0 | 2026-03-25 | **Debug Telemetry** (Error tracking, auto-logs `errors.txt` with timestamps) |
 | 1.0.0 | 2026-03-17 | Initial release with full module suite |
-
 ---
 
 ## Credits & Attribution

