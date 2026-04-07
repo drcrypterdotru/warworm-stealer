@@ -19,6 +19,7 @@ from PIL import ImageGrab
 from flask import Flask, Blueprint, render_template_string, request, session, jsonify, Response, send_file, abort, make_response, redirect, url_for
 from markupsafe import escape as html_escape
 from werkzeug.utils import secure_filename
+import signal 
 
 # SECURITY CONFIGURATION
 class SecurityConfig:
@@ -455,7 +456,7 @@ rd_bp = Blueprint('remote_desktop', __name__, url_prefix='/rd')
 fm_bp = Blueprint('filemanager', __name__, url_prefix='/fm')
 
 # ============================================================================
-# UNIFIED LOGIN HTML TEMPLATE (Used by both RD and FM)
+#  LOGIN HTML TEMPLATE (Used by both RD and FM)
 # ============================================================================
 LOGIN_HTML = '''<!DOCTYPE html>
 <html lang="en">
@@ -1427,12 +1428,10 @@ FM_HTML_TEMPLATE = '''<!DOCTYPE html>
         .brand-icon {
             width: 48px;
             height: 48px;
-            /* background: linear-gradient(...) */  /* Also remove gradient since you're using image */
             border-radius: var(--radius);
             display: flex;
             align-items: center;
             justify-content: center;
-            /* box-shadow: 0 4px 20px rgba(0, 212, 255, 0.3); */  /* REMOVE THIS LINE */
         }
         .toolbar-container {
             position: relative;
@@ -1631,6 +1630,8 @@ FM_HTML_TEMPLATE = '''<!DOCTYPE html>
         .context-item:hover { background: var(--glass-hover); }
         .context-item.danger { color: var(--danger); }
         .context-divider { height: 1px; background: var(--glass-border); margin: 8px 0; }
+        
+        /* Modal Styles */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -1642,33 +1643,68 @@ FM_HTML_TEMPLATE = '''<!DOCTYPE html>
             z-index: 2000;
             padding: 20px;
         }
+        .modal-overlay.active { display: flex; }
         .modal {
             background: linear-gradient(135deg, rgba(30,30,40,0.95), rgba(20,20,30,0.95));
             border: 1px solid var(--glass-border);
             border-radius: 20px;
             width: 100%;
-            max-width: 420px;
+            max-width: 900px;
+            height: 80vh;
+            display: flex;
+            flex-direction: column;
             overflow: hidden;
         }
-        .modal-header { padding: 24px 24px 0; font-size: 18px; font-weight: 600; }
-        .modal-body { padding: 20px 24px; }
-        .modal-footer { padding: 0 24px 24px; display: flex; justify-content: flex-end; gap: 10px; }
-        .input {
-            width: 100%;
-            padding: 12px 16px;
+        .modal-header { 
+            padding: 20px 24px; 
+            border-bottom: 1px solid var(--glass-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-title { font-size: 18px; font-weight: 600; }
+        .modal-body { 
+            flex: 1; 
+            padding: 20px; 
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .editor-toolbar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+        .editor-textarea {
+            flex: 1;
             background: rgba(0,0,0,0.3);
             border: 1px solid var(--glass-border);
-            border-radius: 10px;
+            border-radius: 8px;
+            padding: 16px;
             color: var(--text);
+            font-family: 'Consolas', 'Monaco', monospace;
             font-size: 14px;
+            line-height: 1.5;
+            resize: none;
             outline: none;
         }
-        .input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+        .editor-textarea:focus { border-color: var(--accent); }
+        .modal-footer { 
+            padding: 20px 24px; 
+            border-top: 1px solid var(--glass-border);
+            display: flex; 
+            justify-content: flex-end; 
+            gap: 10px; 
+        }
+        
+        /* Preview Drawer */
         .preview-drawer {
             position: fixed;
-            right: -450px;
+            right: -500px;
             top: 0;
-            width: 450px;
+            width: 500px;
             height: 100%;
             background: var(--glass-bg);
             backdrop-filter: blur(30px);
@@ -1679,6 +1715,43 @@ FM_HTML_TEMPLATE = '''<!DOCTYPE html>
             flex-direction: column;
         }
         .preview-drawer.active { right: 0; }
+        .preview-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--glass-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .preview-title { font-size: 16px; font-weight: 600; }
+        .preview-content {
+            flex: 1;
+            overflow: auto;
+            padding: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+        .preview-image {
+            max-width: 100%;
+            max-height: 60vh;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .preview-text {
+            width: 100%;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            padding: 20px;
+            font-family: monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-break: break-word;
+            max-height: 60vh;
+            overflow: auto;
+        }
         .status-bar {
             position: fixed;
             bottom: 0;
@@ -1711,6 +1784,22 @@ FM_HTML_TEMPLATE = '''<!DOCTYPE html>
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: var(--glass-border); border-radius: 4px; }
+        
+        /* Upload Zone */
+        .upload-zone {
+            border: 2px dashed var(--glass-border);
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            color: var(--text-dim);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .upload-zone:hover, .upload-zone.dragover {
+            border-color: var(--accent);
+            background: rgba(0, 212, 255, 0.05);
+            color: var(--accent);
+        }
     </style>
 </head>
 <body>
@@ -1720,7 +1809,7 @@ FM_HTML_TEMPLATE = '''<!DOCTYPE html>
             <div style="font-size: 3rem; margin-bottom: 1rem;">📁</div>
             <h1>File Manager</h1>
             <div class="login-subtitle">Secure Access Required</div>
-            <div class="service-badge">Unified Protection</div>
+            <div class="service-badge">Protection</div>
             <input type="password" id="loginPassword" class="login-input" placeholder="Enter access password..." autocomplete="off">
             <button class="login-btn" onclick="doLogin()">Access File Manager</button>
             <div class="login-error" id="loginError">Invalid password</div>
@@ -1769,6 +1858,14 @@ FM_HTML_TEMPLATE = '''<!DOCTYPE html>
                 <span>↓</span>
                 <span>Download</span>
             </button>
+            <button class="btn" id="btn-edit" onclick="editSelected()" disabled>
+                <span>✏️</span>
+                <span>Edit</span>
+            </button>
+            <button class="btn" id="btn-exec" onclick="executeSelected()" disabled style="color: var(--warning); border-color: rgba(255, 165, 2, 0.3);">
+                <span>▶️</span>
+                <span>Run</span>
+            </button>
             <button class="btn danger" id="btn-delete" onclick="deleteSelected()" disabled>Delete</button>
         </div>
     </div>
@@ -1799,38 +1896,75 @@ FM_HTML_TEMPLATE = '''<!DOCTYPE html>
             </div>
         </main>
     </div>
-    <input type="file" id="file-input" multiple class="hidden" onchange="handleUpload(this.files)" accept="*/*">
+    
+    <!-- Hidden File Input -->
+    <input type="file" id="file-input" multiple class="hidden" onchange="handleUpload(this.files)">
+    
+    <!-- Progress Overlay -->
     <div class="progress-overlay" id="progress-overlay">
         <div class="progress-modal">
-            <div style="font-size: 20px; font-weight: 600; margin-bottom: 12px;">Downloading...</div>
+            <div style="font-size: 20px; font-weight: 600; margin-bottom: 12px;">Processing...</div>
             <div style="color: var(--text-dim); margin-bottom: 24px;" id="progress-file">filename.ext</div>
             <div style="width: 100%; height: 10px; background: rgba(255,255,255,0.1); border-radius: 5px; overflow: hidden; margin-bottom: 16px;">
-                <div style="height: 100%; background: linear-gradient(90deg, var(--accent), #8a2be2); border-radius: 5px; transition: width 0.3s;" id="progress-bar" style="width: 0%"></div>
+                <div style="height: 100%; background: linear-gradient(90deg, var(--accent), #8a2be2); border-radius: 5px; transition: width 0.3s; width: 0%" id="progress-bar"></div>
             </div>
             <div style="font-size: 28px; font-weight: 700; color: var(--accent);" id="progress-text">0%</div>
             <button style="margin-top: 20px; padding: 12px 32px; background: rgba(255, 71, 87, 0.2); color: var(--danger); border: 1px solid var(--danger); border-radius: 10px; cursor: pointer;" onclick="cancelDownload()">Cancel</button>
         </div>
     </div>
+    
+    <!-- Context Menu -->
     <div class="context-menu" id="context-menu">
         <div class="context-item" onclick="contextAction('open')"><span>📂</span> Open</div>
+        <div class="context-item" onclick="contextAction('preview')"><span>👁️</span> Preview</div>
         <div class="context-item" onclick="contextAction('download')"><span>⬇️</span> Download</div>
+        <div class="context-item" onclick="contextAction('edit')"><span>✏️</span> Edit</div>
         <div class="context-divider"></div>
         <div class="context-item danger" onclick="contextAction('delete')"><span>🗑️</span> Delete</div>
     </div>
-    <div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()">
+    
+    <!-- Text Editor Modal -->
+    <div class="modal-overlay" id="editor-modal">
         <div class="modal">
-            <div class="modal-header" id="modal-title">Title</div>
-            <div class="modal-body" id="modal-body"></div>
-            <div class="modal-footer" id="modal-footer"></div>
+            <div class="modal-header">
+                <div class="modal-title" id="editor-title">Edit File</div>
+                <button class="btn btn-icon" onclick="closeEditor()">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="editor-toolbar">
+                    <span id="editor-info" style="color: var(--text-dim); font-size: 12px;">UTF-8</span>
+                    <span style="flex:1"></span>
+                    <button class="btn" onclick="formatContent()">Format</button>
+                </div>
+                <textarea class="editor-textarea" id="editor-content" spellcheck="false"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeEditor()">Cancel</button>
+                <button class="btn primary" onclick="saveFile()" id="save-btn">💾 Save Changes</button>
+            </div>
         </div>
     </div>
+
+    <button class="btn" id="btn-exec" onclick="executeSelected()" disabled style="color: var(--warning)">
+        <span>▶️</span>
+        <span>Run / Open</span>
+    </button>
+    
+    <!-- Preview Drawer -->
     <div class="preview-drawer" id="preview">
-        <div style="padding: 24px; border-bottom: 1px solid var(--glass-border); display: flex; justify-content: space-between; align-items: center;">
-            <h3 id="preview-title">Preview</h3>
+        <div class="preview-header">
+            <div class="preview-title" id="preview-title">Preview</div>
             <button class="btn btn-icon" onclick="closePreview()">✕</button>
         </div>
-        <div style="flex: 1; overflow: auto; padding: 24px; display: flex; align-items: center; justify-content: center;" id="preview-content"></div>
+        <div class="preview-content" id="preview-content">
+            <div class="empty-state">
+                <div style="font-size: 48px">🖼️</div>
+                <div>Select a file to preview</div>
+            </div>
+        </div>
     </div>
+    
+    <!-- Status Bar -->
     <footer class="status-bar">
         <div style="display: flex; align-items: center; gap: 16px;">
             <span id="status-text">Ready</span>
@@ -1856,11 +1990,49 @@ FM_HTML_TEMPLATE = '''<!DOCTYPE html>
         let currentFiles = [];
         let currentDownloadController = null;
         let isAuthenticated = false;
+        let currentEditFile = null;
         
-        // Check auth on load
+        // Initialize
         window.addEventListener('DOMContentLoaded', async () => {
             await checkAuth();
+            setupDragDrop();
         });
+        
+        function setupDragDrop() {
+            const fileList = document.getElementById('file-list');
+            
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                fileList.addEventListener(eventName, preventDefaults, false);
+                document.body.addEventListener(eventName, preventDefaults, false);
+            });
+            
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            ['dragenter', 'dragover'].forEach(eventName => {
+                fileList.addEventListener(eventName, () => {
+                    fileList.style.border = '2px dashed var(--accent)';
+                    fileList.style.background = 'rgba(0, 212, 255, 0.05)';
+                }, false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                fileList.addEventListener(eventName, () => {
+                    fileList.style.border = '';
+                    fileList.style.background = '';
+                }, false);
+            });
+            
+            fileList.addEventListener('drop', (e) => {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                if (files.length > 0) {
+                    handleUpload(files);
+                }
+            });
+        }
         
         async function checkAuth() {
             try {
@@ -1980,7 +2152,7 @@ FM_HTML_TEMPLATE = '''<!DOCTYPE html>
         function renderFiles(files) {
             const list = document.getElementById('file-list');
             if (files.length === 0) {
-                list.innerHTML = '<div class="empty-state"><div style="font-size: 64px; opacity: 0.3;">📂</div><div>This folder is empty</div></div>';
+                list.innerHTML = '<div class="empty-state"><div style="font-size: 64px; opacity: 0.3;">📂</div><div>This folder is empty</div><div style="font-size: 12px; margin-top: 8px; color: var(--text-dim);">Drag files here or click Upload</div></div>';
                 return;
             }
             list.innerHTML = '';
@@ -1996,6 +2168,7 @@ FM_HTML_TEMPLATE = '''<!DOCTYPE html>
                 div.className = 'file-item';
                 div.dataset.name = file.name;
                 div.dataset.type = file.type;
+                div.dataset.ext = file.name.split('.').pop().toLowerCase();
                 const icon = file.type === 'directory' ? '📁' : getFileIcon(file.name);
                 const size = file.type === 'directory' ? '--' : formatSize(file.size);
                 const date = file.modified ? new Date(file.modified).toLocaleString() : '--';
@@ -2005,28 +2178,33 @@ FM_HTML_TEMPLATE = '''<!DOCTYPE html>
                 
                 div.innerHTML = `
                     <div><input type="checkbox" class="file-checkbox" onchange="toggleSelect('${safeName}', this.checked)"></div>
-                    <div class="file-info"><div class="file-icon">${icon}</div><div class="file-name">${safeName}</div></div>
+                    <div class="file-info"><div class="file-icon">${icon}</div><div class="file-name" title="${safeName}">${safeName}</div></div>
                     <div class="file-meta">${size}</div>
                     <div class="file-meta">${date}</div>
                     <div class="file-meta">${ext}</div>
                 `;
                 div.onclick = (e) => { if (e.target.type !== 'checkbox') selectFile(file.name, e); };
                 div.ondblclick = () => openItem(file.name, file.type);
-                div.oncontextmenu = (e) => showContext(e, file.name);
+                div.oncontextmenu = (e) => showContext(e, file.name, file.type);
                 list.appendChild(div);
             });
         }
         
         function getFileIcon(name) {
             const ext = name.split('.').pop().toLowerCase();
-            const icons = {txt:'📄',pdf:'📕',doc:'📝',docx:'📝',jpg:'🖼️',jpeg:'🖼️',png:'🖼️',gif:'🖼️',mp4:'🎬',mp3:'🎵',zip:'📦',rar:'📦',py:'🐍',js:'📜',html:'🌐',css:'🎨',exe:'⚙️'};
+            const icons = {
+                txt:'📄',pdf:'📕',doc:'📝',docx:'📝',jpg:'🖼️',jpeg:'🖼️',png:'🖼️',gif:'🖼️',
+                mp4:'🎬',mp3:'🎵',zip:'📦',rar:'📦',7z:'📦',py:'🐍',js:'📜',html:'🌐',css:'🎨',
+                exe:'⚙️',bat:'⚙️',cmd:'⚙️',sh:'⚙️',ps1:'⚙️',vbs:'⚙️',json:'📋',xml:'📋',md:'📝',
+                log:'📄',csv:'📊',ini:'⚙️',cfg:'⚙️'
+            };
             return icons[ext] || '📄';
         }
         
         function formatSize(bytes) {
             if (bytes === 0) return '0 B';
             const k = 1024;
-            const sizes = ['B','KB','MB','GB'];
+            const sizes = ['B','KB','MB','GB','TB'];
             const i = Math.floor(Math.log(bytes) / Math.log(k));
             return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
         }
@@ -2039,7 +2217,7 @@ FM_HTML_TEMPLATE = '''<!DOCTYPE html>
         }
         
         function selectFile(name, event) {
-            if (!event.ctrlKey && !event.metaKey) {
+            if (!event.ctrlKey && !event.metaKey && !event.shiftKey) {
                 selectedFiles.clear();
                 document.querySelectorAll('.file-item').forEach(item => item.classList.remove('selected'));
                 document.querySelectorAll('.file-checkbox').forEach(cb => cb.checked = false);
@@ -2048,14 +2226,22 @@ FM_HTML_TEMPLATE = '''<!DOCTYPE html>
         }
         
         function toggleSelect(name, checked) {
-            const safeSelector = CSS.escape(name);
-            const item = document.querySelector(`.file-item[data-name="${safeSelector}"]`);
+            const items = document.querySelectorAll('.file-item');
+            items.forEach(item => {
+                if (item.dataset.name === name) {
+                    if (checked) {
+                        item.classList.add('selected');
+                        item.querySelector('.file-checkbox').checked = true;
+                    } else {
+                        item.classList.remove('selected');
+                        item.querySelector('.file-checkbox').checked = false;
+                    }
+                }
+            });
             if (checked) {
                 selectedFiles.add(name);
-                if (item) item.classList.add('selected');
             } else {
                 selectedFiles.delete(name);
-                if (item) item.classList.remove('selected');
             }
             updateSelectionUI();
         }
@@ -2067,8 +2253,10 @@ FM_HTML_TEMPLATE = '''<!DOCTYPE html>
             checkboxes.forEach(cb => cb.checked = !allChecked);
             if (!allChecked) {
                 currentFiles.forEach(f => selectedFiles.add(f.name));
+                document.querySelectorAll('.file-item').forEach(item => item.classList.add('selected'));
+            } else {
+                document.querySelectorAll('.file-item').forEach(item => item.classList.remove('selected'));
             }
-            renderFiles(currentFiles);
             updateSelectionUI();
         }
         
@@ -2076,41 +2264,308 @@ FM_HTML_TEMPLATE = '''<!DOCTYPE html>
             const count = selectedFiles.size;
             document.getElementById('btn-download').disabled = count === 0;
             document.getElementById('btn-delete').disabled = count === 0;
+            
+            // Check if selected files are executable or editable
+            let hasEditable = false;
+            let hasExecutable = false;
+            selectedFiles.forEach(name => {
+                const ext = name.split('.').pop().toLowerCase();
+                if (['txt','py','js','html','css','json','xml','md','log','csv','ini','cfg','bat','sh','ps1','vbs'].includes(ext)) {
+                    hasEditable = true;
+                }
+                if (['py','bat','cmd','sh','ps1','vbs','js'].includes(ext)) {
+                    hasExecutable = true;
+                }
+            });
+            
+            document.getElementById('btn-edit').disabled = !hasEditable;
+            document.getElementById('btn-exec').disabled = !hasExecutable;
+            
             const badge = document.getElementById('selection-badge');
             badge.textContent = count + ' selected';
             badge.classList.toggle('active', count > 0);
             document.getElementById('select-all').checked = count === currentFiles.length && count > 0;
         }
         
-        function openItem(name, type) {
+        // Open/Execute File Handler
+        async function openItem(name, type) {
             if (type === 'directory') {
                 const sep = currentPath.includes('/') ? '/' : '\\\\';
                 const newPath = currentPath.endsWith(sep) ? currentPath + name : currentPath + sep + name;
                 loadDirectory(newPath);
             } else {
-                previewFile(name);
+                const ext = name.split('.').pop().toLowerCase();
+                const executableExts = ['py', 'bat', 'cmd', 'sh', 'ps1', 'vbs', 'js'];
+                
+                if (executableExts.includes(ext)) {
+                    // Ask whether to execute or edit
+                    if (confirm(`Execute ${name}?\\n\\nClick OK to run, Cancel to view/edit.`)) {
+                        executeFile(name);
+                    } else {
+                        editFile(name);
+                    }
+                } else if (['jpg','jpeg','png','gif','bmp','webp'].includes(ext)) {
+                    previewFile(name);
+                } else if (['txt','json','xml','md','log','csv','html','css'].includes(ext)) {
+                    editFile(name);
+                } else {
+                    downloadFile(name);
+                }
             }
         }
         
-        function showContext(e, filename) {
+        function showContext(e, filename, type) {
             e.preventDefault();
             contextTarget = filename;
             const menu = document.getElementById('context-menu');
+            
+            // Update menu based on file type
+            const ext = filename.split('.').pop().toLowerCase();
+            const isExecutable = ['py','bat','cmd','sh','ps1','vbs','js'].includes(ext);
+            const isImage = ['jpg','jpeg','png','gif','bmp','webp'].includes(ext);
+            const isText = ['txt','json','xml','md','log','csv','html','css','ini','cfg'].includes(ext);
+            
+            let menuHTML = '';
+            if (type === 'directory') {
+                menuHTML += `<div class="context-item" onclick="contextAction('open')"><span>📂</span> Open</div>`;
+            } else {
+                menuHTML += `<div class="context-item" onclick="contextAction('open')"><span>📂</span> Open</div>`;
+                if (isImage || isText) {
+                    menuHTML += `<div class="context-item" onclick="contextAction('preview')"><span>👁️</span> Preview</div>`;
+                }
+                if (isExecutable) {
+                    menuHTML += `<div class="context-item" onclick="contextAction('execute')" style="color: var(--warning)"><span>▶️</span> Execute</div>`;
+                }
+                menuHTML += `<div class="context-item" onclick="contextAction('download')"><span>⬇️</span> Download</div>`;
+                if (isText) {
+                    menuHTML += `<div class="context-item" onclick="contextAction('edit')"><span>✏️</span> Edit</div>`;
+                }
+            }
+            menuHTML += `<div class="context-divider"></div>`;
+            menuHTML += `<div class="context-item danger" onclick="contextAction('delete')"><span>🗑️</span> Delete</div>`;
+            
+            menu.innerHTML = menuHTML;
             menu.style.display = 'block';
             menu.style.left = Math.min(e.pageX, window.innerWidth - 220) + 'px';
-            menu.style.top = Math.min(e.pageY, window.innerHeight - 200) + 'px';
+            menu.style.top = Math.min(e.pageY, window.innerHeight - 300) + 'px';
         }
         
         function contextAction(action) {
             if (!contextTarget) return;
             switch(action) {
                 case 'open': openItem(contextTarget, 'file'); break;
+                case 'preview': previewFile(contextTarget); break;
+                case 'execute': executeFile(contextTarget); break;
                 case 'download': downloadFile(contextTarget); break;
+                case 'edit': editFile(contextTarget); break;
                 case 'delete': deleteFile(contextTarget); break;
             }
             document.getElementById('context-menu').style.display = 'none';
         }
         
+        // Execute Functionality
+        async function executeFile(name) {
+            const sep = currentPath.includes('/') ? '/' : '\\\\';
+            const path = currentPath.endsWith(sep) ? currentPath + name : currentPath + sep + name;
+            
+            if (!confirm(`WARNING: You are about to execute:\\n\\n${name}\\n\\nThis may be dangerous. Continue?`)) {
+                return;
+            }
+            
+            showStatus('Executing ' + name + '...');
+            
+            try {
+                const res = await fetch('api/execute', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': CSRF_TOKEN
+                    },
+                    body: JSON.stringify({path: path})
+                });
+                
+                const data = await res.json();
+                
+                if (res.ok && data.success) {
+                    showExecutionResult(name, data);
+                } else {
+                    alert('Execution failed:\\n' + (data.error || 'Unknown error'));
+                    showStatus('Execution failed', true);
+                }
+            } catch(e) {
+                alert('Error executing file: ' + e.message);
+                showStatus('Execution error', true);
+            }
+        }
+        
+        function showExecutionResult(filename, data) {
+            const modal = document.getElementById('editor-modal');
+            const title = document.getElementById('editor-title');
+            const content = document.getElementById('editor-content');
+            
+            title.textContent = 'Execution Result: ' + filename;
+            
+            let output = '';
+            if (data.command) output += `Command: ${data.command}\\n`;
+            output += `Return Code: ${data.returncode}\\n`;
+            output += `${'='.repeat(50)}\\n\\n`;
+            
+            if (data.stdout) {
+                output += 'STDOUT:\\n' + data.stdout + '\\n\\n';
+            }
+            if (data.stderr) {
+                output += 'STDERR:\\n' + data.stderr + '\\n\\n';
+            }
+            
+            content.value = output;
+            content.readOnly = true;
+            document.getElementById('save-btn').style.display = 'none';
+            
+            modal.classList.add('active');
+            showStatus('Execution completed');
+        }
+        
+        function executeSelected() {
+            const file = Array.from(selectedFiles)[0];
+            if (file) executeFile(file);
+        }
+        
+        // Preview Functionality
+        async function previewFile(name) {
+            const sep = currentPath.includes('/') ? '/' : '\\\\';
+            const path = currentPath.endsWith(sep) ? currentPath + name : currentPath + sep + name;
+            const ext = name.split('.').pop().toLowerCase();
+            
+            document.getElementById('preview-title').textContent = name;
+            const content = document.getElementById('preview-content');
+            content.innerHTML = '<div class="empty-state"><div style="font-size: 32px">⟳</div><div>Loading...</div></div>';
+            
+            document.getElementById('preview').classList.add('active');
+            
+            try {
+                const res = await fetch('api/open?path=' + encodeURIComponent(path), {
+                    headers: {'X-CSRF-Token': CSRF_TOKEN}
+                });
+                
+                if (!res.ok) throw new Error('Failed to load');
+                const data = await res.json();
+                
+                if (data.type === 'image') {
+                    content.innerHTML = `<img src="data:${data.mime};base64,${data.data}" class="preview-image" alt="${escapeHtml(name)}">`;
+                } else if (data.type === 'text') {
+                    content.innerHTML = `<pre class="preview-text">${escapeHtml(data.content)}</pre>`;
+                } else {
+                    content.innerHTML = `
+                        <div class="empty-state">
+                            <div style="font-size: 64px">📄</div>
+                            <div>Preview not available</div>
+                            <button class="btn primary" onclick="downloadFile('${escapeHtml(name)}')" style="margin-top: 20px;">
+                                ⬇️ Download File
+                            </button>
+                        </div>
+                    `;
+                }
+            } catch(e) {
+                content.innerHTML = '<div class="empty-state"><div style="color: var(--danger)">Error loading preview</div></div>';
+            }
+        }
+        
+        function closePreview() {
+            document.getElementById('preview').classList.remove('active');
+        }
+        
+        // Edit Functionality
+        async function editFile(name) {
+            const sep = currentPath.includes('/') ? '/' : '\\\\';
+            const path = currentPath.endsWith(sep) ? currentPath + name : currentPath + sep + name;
+            
+            currentEditFile = path;
+            document.getElementById('editor-title').textContent = 'Edit: ' + name;
+            document.getElementById('editor-content').value = 'Loading...';
+            document.getElementById('editor-content').readOnly = false;
+            document.getElementById('save-btn').style.display = 'flex';
+            document.getElementById('editor-modal').classList.add('active');
+            
+            try {
+                const res = await fetch('api/read?path=' + encodeURIComponent(path), {
+                    headers: {'X-CSRF-Token': CSRF_TOKEN}
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    document.getElementById('editor-content').value = data.content;
+                    document.getElementById('editor-info').textContent = `${formatSize(data.size)} | UTF-8`;
+                } else {
+                    const err = await res.json();
+                    alert('Error: ' + (err.error || 'Failed to read file'));
+                    closeEditor();
+                }
+            } catch(e) {
+                alert('Error reading file');
+                closeEditor();
+            }
+        }
+        
+        function editSelected() {
+            const file = Array.from(selectedFiles)[0];
+            if (file) editFile(file);
+        }
+        
+        async function saveFile() {
+            if (!currentEditFile) return;
+            
+            const content = document.getElementById('editor-content').value;
+            const btn = document.getElementById('save-btn');
+            const originalText = btn.textContent;
+            
+            btn.disabled = true;
+            btn.textContent = 'Saving...';
+            
+            try {
+                const res = await fetch('api/save', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': CSRF_TOKEN
+                    },
+                    body: JSON.stringify({
+                        path: currentEditFile,
+                        content: content
+                    })
+                });
+                
+                if (res.ok) {
+                    showStatus('File saved successfully');
+                    closeEditor();
+                } else {
+                    const err = await res.json();
+                    alert('Error saving: ' + (err.error || 'Unknown error'));
+                }
+            } catch(e) {
+                alert('Error saving file');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+        }
+        
+        function closeEditor() {
+            document.getElementById('editor-modal').classList.remove('active');
+            currentEditFile = null;
+            document.getElementById('editor-content').readOnly = false;
+            document.getElementById('save-btn').style.display = 'flex';
+        }
+        
+        function formatContent() {
+            const textarea = document.getElementById('editor-content');
+            try {
+                const obj = JSON.parse(textarea.value);
+                textarea.value = JSON.stringify(obj, null, 2);
+            } catch(e) {
+                // Not JSON, ignore
+            }
+        }
+        
+        // Download Functions
         async function downloadFile(name) {
             const sep = currentPath.includes('/') ? '/' : '\\\\';
             const path = currentPath.endsWith(sep) ? currentPath + name : currentPath + sep + name;
@@ -2181,19 +2636,30 @@ FM_HTML_TEMPLATE = '''<!DOCTYPE html>
             }
         }
         
+        // Delete Functions
         async function deleteFile(name) {
             if (!confirm('Delete ' + name + '?')) return;
             const sep = currentPath.includes('/') ? '/' : '\\\\';
-            const res = await fetch('api/delete', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-Token': CSRF_TOKEN
-                },
-                body: JSON.stringify({path: currentPath.endsWith(sep) ? currentPath + name : currentPath + sep + name})
-            });
-            if (res.ok) loadDirectory(currentPath);
-            else showStatus('Delete failed', true);
+            const path = currentPath.endsWith(sep) ? currentPath + name : currentPath + sep + name;
+            
+            try {
+                const res = await fetch('api/delete', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': CSRF_TOKEN
+                    },
+                    body: JSON.stringify({path: path})
+                });
+                if (res.ok) {
+                    loadDirectory(currentPath);
+                    showStatus('Deleted: ' + name);
+                } else {
+                    showStatus('Delete failed', true);
+                }
+            } catch(e) {
+                showStatus('Delete failed', true);
+            }
         }
         
         async function deleteSelected() {
@@ -2205,16 +2671,21 @@ FM_HTML_TEMPLATE = '''<!DOCTYPE html>
             updateSelectionUI();
         }
         
+        // Upload Functions - Fixed to ensure directory targeting
         function triggerUpload() {
             document.getElementById('file-input').click();
         }
         
         async function handleUpload(files) {
             if (!files.length) return;
-            showStatus('Uploading...');
+            showStatus('Uploading ' + files.length + ' file(s) to ' + currentPath + '...');
+            
             const formData = new FormData();
-            for (let f of files) formData.append('files', f);
-            formData.append('path', currentPath);
+            for (let f of files) {
+                formData.append('files', f);
+            }
+            formData.append('path', currentPath); // Ensure current directory is sent
+            
             try {
                 const res = await fetch('api/upload', { 
                     method: 'POST', 
@@ -2223,17 +2694,18 @@ FM_HTML_TEMPLATE = '''<!DOCTYPE html>
                 });
                 const data = await res.json();
                 if (data.success) {
-                    showStatus('Uploaded ' + data.files.length + ' files');
+                    showStatus(`Uploaded ${data.count} file(s) to ${data.target_directory}`);
                     loadDirectory(currentPath);
                 } else {
                     showStatus(data.error || 'Upload failed', true);
                 }
             } catch (err) {
-                showStatus('Upload failed', true);
+                showStatus('Upload failed: ' + err.message, true);
             }
             document.getElementById('file-input').value = '';
         }
         
+        // Directory Operations
         function newFolder() {
             const name = prompt('Folder name:');
             if (name) {
@@ -2245,8 +2717,12 @@ FM_HTML_TEMPLATE = '''<!DOCTYPE html>
                     },
                     body: JSON.stringify({path: currentPath, name})
                 }).then(r => {
-                    if (r.ok) loadDirectory(currentPath);
-                    else showStatus('Failed to create folder', true);
+                    if (r.ok) {
+                        loadDirectory(currentPath);
+                        showStatus('Folder created');
+                    } else {
+                        showStatus('Failed to create folder', true);
+                    }
                 });
             }
         }
@@ -2290,6 +2766,25 @@ FM_HTML_TEMPLATE = '''<!DOCTYPE html>
         function updateStatus(count) {
             document.getElementById('item-count').textContent = count + ' items';
         }
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closePreview();
+                closeEditor();
+                document.getElementById('context-menu').style.display = 'none';
+            }
+            if (e.ctrlKey && e.key === 's' && document.getElementById('editor-modal').classList.contains('active')) {
+                e.preventDefault();
+                if (!document.getElementById('editor-content').readOnly) {
+                    saveFile();
+                }
+            }
+            if (e.ctrlKey && e.key === 'u') {
+                e.preventDefault();
+                triggerUpload();
+            }
+        });
         
         document.addEventListener('click', function(e) {
             if (!e.target.closest('.context-menu')) {
@@ -2439,7 +2934,7 @@ def rd_input():
 # ============================================================================
 @fm_bp.route('/')
 def fm_index():
-    # Unified authentication check
+    #  authentication check
     if not session.get('authenticated'):
         csrf_token = generate_csrf_token()
         return render_template_string(LOGIN_HTML,
@@ -2469,7 +2964,7 @@ def fm_index():
 @fm_bp.route('/auth', methods=['POST'])
 @rate_limit(key='login')
 def fm_auth():
-    """Unified authentication endpoint for File Manager - same password as RD"""
+    """ authentication endpoint for File Manager - same password as RD"""
     client_ip = request.remote_addr
     
     if not check_brute_force(client_ip):
@@ -2632,6 +3127,300 @@ def fm_mkdir():
     except Exception as e: 
         return jsonify({'error': 'Failed to create directory'}), 500
 
+
+@fm_bp.route('/api/read')
+@require_auth
+@validate_filepath
+def fm_read():
+    """Read file content for editing"""
+    path = request.args.get('path', '')
+    try:
+        target = Path(path).resolve()
+        if not target.exists() or not target.is_file():
+            return jsonify({'error': 'File not found'}), 404
+        
+        # Size limit for editing (10MB)
+        if target.stat().st_size > 10 * 1024 * 1024:
+            return jsonify({'error': 'File too large to edit (>10MB)'}), 413
+        
+        # Try to detect if binary
+        with open(target, 'rb') as f:
+            chunk = f.read(1024)
+            if b'\x00' in chunk:
+                return jsonify({'error': 'Binary files cannot be edited'}), 400
+        
+        # Read as text
+        with open(target, 'r', encoding='utf-8', errors='ignore') as f:
+            content = f.read()
+        
+        return jsonify({
+            'success': True, 
+            'content': content,
+            'name': target.name,
+            'size': target.stat().st_size
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@fm_bp.route('/api/save', methods=['POST'])
+@require_auth
+@validate_filepath
+def fm_save():
+    """Save edited file content"""
+    try:
+        data = request.get_json()
+        path = data.get('path', '')
+        content = data.get('content', '')
+        
+        target = Path(path).resolve()
+        if not target.exists() or not target.is_file():
+            return jsonify({'error': 'File not found'}), 404
+        
+        # Backup original
+        backup_path = str(target) + '.backup'
+        shutil.copy2(str(target), backup_path)
+        
+        # Write new content
+        with open(target, 'w', encoding='utf-8') as f:
+            f.write(content)
+        
+        # Remove backup on success
+        if os.path.exists(backup_path):
+            os.remove(backup_path)
+        
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@fm_bp.route('/api/preview')
+@require_auth
+@validate_filepath
+def fm_preview():
+    """Preview file (images, text, pdf)"""
+    path = request.args.get('path', '')
+    try:
+        target = Path(path).resolve()
+        if not target.exists() or not target.is_file():
+            abort(404)
+        
+        mime_types = {
+            '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png',
+            '.gif': 'image/gif', '.bmp': 'image/bmp', '.webp': 'image/webp',
+            '.txt': 'text/plain', '.py': 'text/plain', '.js': 'text/plain',
+            '.html': 'text/html', '.css': 'text/css', '.json': 'application/json',
+            '.pdf': 'application/pdf', '.mp4': 'video/mp4', '.webm': 'video/webm'
+        }
+        
+        ext = target.suffix.lower()
+        mimetype = mime_types.get(ext, 'application/octet-stream')
+        
+        # For text files, return content as JSON
+        if mimetype == 'text/plain' or ext in ['.py', '.js', '.html', '.css', '.json', '.txt']:
+            with open(target, 'r', encoding='utf-8', errors='ignore') as f:
+                content = f.read()
+            return jsonify({
+                'type': 'text',
+                'content': content,
+                'mime': mimetype
+            })
+        
+        # For images and other files, send file
+        return send_file(str(target), mimetype=mimetype)
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    
+
+@fm_bp.route('/api/execute', methods=['POST'])
+@require_auth
+@validate_filepath
+def fm_execute():
+    """Execute script files with safety restrictions"""
+    try:
+        data = request.get_json()
+        path = data.get('path', '')
+        target = Path(path).resolve()
+        
+        if not target.exists() or not target.is_file():
+            return jsonify({'error': 'File not found'}), 404
+        
+        # Security: Only allow specific script extensions
+        allowed_exts = {'.py', '.bat', '.cmd', '.sh', '.ps1', '.vbs', '.js'}
+        ext = target.suffix.lower()
+        
+        if ext not in allowed_exts:
+            return jsonify({'error': f'Execution not allowed for {ext} files. Allowed: {", ".join(allowed_exts)}'}), 403
+        
+        # Security: Check file size (max 5MB)
+        if target.stat().st_size > 5 * 1024 * 1024:
+            return jsonify({'error': 'File too large to execute (>5MB)'}), 413
+        
+        # Execute based on file type
+        import subprocess
+        import tempfile
+        
+        stdout_file = tempfile.NamedTemporaryFile(mode='w+', delete=False, suffix='.txt')
+        stderr_file = tempfile.NamedTemporaryFile(mode='w+', delete=False, suffix='.txt')
+        
+        try:
+            if ext == '.py':
+                cmd = [sys.executable, str(target)]
+            elif ext in ['.bat', '.cmd']:
+                cmd = ['cmd.exe', '/c', str(target)]
+            elif ext == '.ps1':
+                cmd = ['powershell.exe', '-ExecutionPolicy', 'Bypass', '-File', str(target)]
+            elif ext == '.sh':
+                cmd = ['bash', str(target)]
+            elif ext == '.vbs':
+                cmd = ['cscript.exe', '//NoLogo', str(target)]
+            elif ext == '.js':
+                cmd = ['cscript.exe', '//NoLogo', str(target)]
+            else:
+                return jsonify({'error': 'Unsupported file type'}), 400
+            
+            # Run with timeout and capture output
+            process = subprocess.Popen(
+                cmd,
+                stdout=stdout_file,
+                stderr=stderr_file,
+                cwd=str(target.parent),
+                creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == 'win32' else 0
+            )
+            
+            try:
+                process.wait(timeout=30)  # 30 second timeout
+            except subprocess.TimeoutExpired:
+                process.kill()
+                return jsonify({'error': 'Execution timeout (30s exceeded)', 'partial': True}), 408
+            
+            stdout_file.flush()
+            stderr_file.flush()
+            
+            # Read outputs
+            with open(stdout_file.name, 'r', errors='ignore') as f:
+                stdout = f.read()
+            with open(stderr_file.name, 'r', errors='ignore') as f:
+                stderr = f.read()
+            
+            return jsonify({
+                'success': True,
+                'returncode': process.returncode,
+                'stdout': stdout,
+                'stderr': stderr,
+                'command': ' '.join(cmd)
+            })
+            
+        finally:
+            try:
+                os.unlink(stdout_file.name)
+                os.unlink(stderr_file.name)
+            except:
+                pass
+                
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@fm_bp.route('/api/open')
+@require_auth
+@validate_filepath
+def fm_open():
+    """Open file - returns content for text, redirects to download for binary"""
+    path = request.args.get('path', '')
+    try:
+        target = Path(path).resolve()
+        if not target.exists() or not target.is_file():
+            abort(404)
+        
+        # Text files - return content
+        text_exts = {'.txt', '.py', '.js', '.html', '.css', '.json', '.xml', '.md', '.log', '.csv', '.ini', '.cfg', '.bat', '.sh', '.ps1', '.vbs'}
+        if target.suffix.lower() in text_exts:
+            with open(target, 'r', encoding='utf-8', errors='ignore') as f:
+                content = f.read()
+            return jsonify({
+                'type': 'text',
+                'content': content,
+                'name': target.name
+            })
+        
+        # Images - return base64 for preview
+        image_exts = {'.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'}
+        if target.suffix.lower() in image_exts:
+            import base64
+            with open(target, 'rb') as f:
+                data = base64.b64encode(f.read()).decode()
+            return jsonify({
+                'type': 'image',
+                'data': data,
+                'mime': 'image/' + target.suffix.lower().replace('.', '').replace('jpg', 'jpeg'),
+                'name': target.name
+            })
+        
+        # Everything else - trigger download
+        return jsonify({
+            'type': 'download',
+            'url': 'api/download?path=' + request.args.get('path', ''),
+            'name': target.name
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@fm_bp.route('/api/upload', methods=['POST'])
+@require_auth
+@validate_filepath
+def fm_upload():
+    """Upload files to specific directory"""
+    if 'files' not in request.files: 
+        return jsonify({'error': 'No files provided'}), 400
+    
+    # Get target path from form data
+    path = request.form.get('path', str(Path.home()))
+    target = Path(path).resolve()
+    
+    # Ensure target exists and is a directory
+    if not target.exists():
+        try:
+            target.mkdir(parents=True, exist_ok=True)
+        except Exception as e:
+            return jsonify({'error': f'Cannot create directory: {str(e)}'}), 400
+    
+    if not target.is_dir(): 
+        return jsonify({'error': 'Invalid path - not a directory'}), 400
+    
+    uploaded = []
+    failed = []
+    
+    for file in request.files.getlist('files'):
+        if file.filename:
+            # Secure the filename
+            safe_name = secure_filename(file.filename)
+            if not safe_name or safe_name.startswith('.') or '..' in safe_name:
+                failed.append(f"{file.filename} (invalid name)")
+                continue
+            
+            try:
+                file_path = target / safe_name
+                
+                # Check for directory traversal
+                file_path.resolve().relative_to(target.resolve())
+                
+                # Save file
+                file.save(str(file_path))
+                uploaded.append(safe_name)
+                
+            except Exception as e:
+                failed.append(f"{file.filename} ({str(e)})")
+    
+    if failed and not uploaded:
+        return jsonify({'error': 'All uploads failed', 'details': failed}), 500
+    
+    return jsonify({
+        'success': True, 
+        'files': uploaded,
+        'count': len(uploaded),
+        'failed': failed,
+        'target_directory': str(target)
+    })
 # ============================================================================
 # SCREEN CAPTURE FUNCTIONS
 # ============================================================================
@@ -2818,169 +3607,169 @@ def start_remote_access(config):
 # ============================================================================
 # STANDALONE Execute TEST-LAB + Debug Modules
 # ============================================================================
-# if __name__ == '__main__':
-#     print("="*70)
-#     print("WARWORM REMOTE ACCESS - SECURE MODE")
-#     print("="*70)
+if __name__ == '__main__':
+    print("="*70)
+    print("WARWORM REMOTE ACCESS - SECURE MODE")
+    print("="*70)
     
-#     TEST_NGROK_TOKEN = ""
-#     TEST_PORT = 5000
-#     TEST_PASSWORD = ""
+    TEST_NGROK_TOKEN = ""
+    TEST_PORT = 5000
+    TEST_PASSWORD = ""
     
-#     ngrok_token = TEST_NGROK_TOKEN
-#     if not ngrok_token:
-#         ngrok_token = input("[TEST] Enter Ngrok Auth Token (press Enter to skip ngrok): ").strip()
+    ngrok_token = TEST_NGROK_TOKEN
+    if not ngrok_token:
+        ngrok_token = input("[TEST] Enter Ngrok Auth Token (press Enter to skip ngrok): ").strip()
     
-#     if not TEST_PASSWORD:
-#         TEST_PASSWORD = ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(16))
+    if not TEST_PASSWORD:
+        TEST_PASSWORD = ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(16))
     
-#     test_config = {
-#         "remote_access_password": TEST_PASSWORD,
-#         "remote_access_port": TEST_PORT,
-#         "ngrok_token": ngrok_token,
-#         "features": {
-#             "remote_desktop": True,
-#             "file_manager": True
-#         }
-#     }
+    test_config = {
+        "remote_access_password": TEST_PASSWORD,
+        "remote_access_port": TEST_PORT,
+        "ngrok_token": ngrok_token,
+        "features": {
+            "remote_desktop": True,
+            "file_manager": True
+        }
+    }
     
-#     print(f"\n[TEST] Configuration:")
-#     print(f"       Port: {TEST_PORT}")
-#     print(f"       Password: {TEST_PASSWORD}")
-#     print(f"       Ngrok Token: {'Yes' if ngrok_token else 'No'}")
-#     print("="*70)
+    print(f"\n[TEST] Configuration:")
+    print(f"       Port: {TEST_PORT}")
+    print(f"       Password: {TEST_PASSWORD}")
+    print(f"       Ngrok Token: {'Yes' if ngrok_token else 'No'}")
+    print("="*70)
     
-#     ngrok_process = None
+    ngrok_process = None
     
-#     def cleanup(signum=None, frame=None):
-#         print("\n[TEST] Cleaning up...")
-#         global ngrok_process
-#         if ngrok_process:
-#             try:
-#                 ngrok_process.terminate()
-#                 ngrok_process.wait(timeout=2)
-#                 print("[TEST] Ngrok stopped")
-#             except:
-#                 try:
-#                     ngrok_process.kill()
-#                 except:
-#                     pass
-#         kill_existing_ngrok()
-#         sys.exit(0)
+    def cleanup(signum=None, frame=None):
+        print("\n[TEST] Cleaning up...")
+        global ngrok_process
+        if ngrok_process:
+            try:
+                ngrok_process.terminate()
+                ngrok_process.wait(timeout=2)
+                print("[TEST] Ngrok stopped")
+            except:
+                try:
+                    ngrok_process.kill()
+                except:
+                    pass
+        kill_existing_ngrok()
+        sys.exit(0)
     
-#     signal.signal(signal.SIGINT, cleanup)
-#     signal.signal(signal.SIGTERM, cleanup)
+    signal.signal(signal.SIGINT, cleanup)
+    signal.signal(signal.SIGTERM, cleanup)
     
-#     if ngrok_token:
-#         print("[TEST] Checking ngrok...")
-#         exe_path = ensure_ngrok()
-#         if not exe_path:
-#             print("[TEST] ERROR: Failed to download ngrok")
-#             sys.exit(1)
-#         print(f"[TEST] Ngrok ready: {exe_path}")
+    if ngrok_token:
+        print("[TEST] Checking ngrok...")
+        exe_path = ensure_ngrok()
+        if not exe_path:
+            print("[TEST] ERROR: Failed to download ngrok")
+            sys.exit(1)
+        print(f"[TEST] Ngrok ready: {exe_path}")
         
-#         print("[TEST] Configuring ngrok token...")
-#         try:
-#             config_cmd = [exe_path, "config", "add-authtoken", ngrok_token]
-#             startupinfo = subprocess.STARTUPINFO()
-#             startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-#             startupinfo.wShowWindow = 0
+        print("[TEST] Configuring ngrok token...")
+        try:
+            config_cmd = [exe_path, "config", "add-authtoken", ngrok_token]
+            startupinfo = subprocess.STARTUPINFO()
+            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+            startupinfo.wShowWindow = 0
             
-#             result = subprocess.run(
-#                 config_cmd,
-#                 capture_output=True,
-#                 text=True,
-#                 startupinfo=startupinfo,
-#                 creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == 'win32' else 0,
-#                 timeout=10
-#             )
-#             if result.returncode == 0:
-#                 print("[TEST] Token configured successfully")
-#         except Exception as e:
-#             print(f"[TEST] Token config error: {e}")
+            result = subprocess.run(
+                config_cmd,
+                capture_output=True,
+                text=True,
+                startupinfo=startupinfo,
+                creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == 'win32' else 0,
+                timeout=10
+            )
+            if result.returncode == 0:
+                print("[TEST] Token configured successfully")
+        except Exception as e:
+            print(f"[TEST] Token config error: {e}")
         
-#         kill_existing_ngrok()
-#         time.sleep(1)
+        kill_existing_ngrok()
+        time.sleep(1)
         
-#         print(f"[TEST] Starting ngrok http {TEST_PORT}...")
-#         cmd = [exe_path, "http", str(TEST_PORT), "--region", "us"]
+        print(f"[TEST] Starting ngrok http {TEST_PORT}...")
+        cmd = [exe_path, "http", str(TEST_PORT), "--region", "us"]
         
-#         startupinfo = None
-#         if sys.platform == 'win32':
-#             startupinfo = subprocess.STARTUPINFO()
-#             startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-#             startupinfo.wShowWindow = 0
+        startupinfo = None
+        if sys.platform == 'win32':
+            startupinfo = subprocess.STARTUPINFO()
+            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+            startupinfo.wShowWindow = 0
         
-#         ngrok_process = subprocess.Popen(
-#             cmd,
-#             stdout=subprocess.PIPE,
-#             stderr=subprocess.STDOUT,
-#             startupinfo=startupinfo,
-#             creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == 'win32' else 0,
-#             cwd=os.path.dirname(exe_path),
-#             text=True,
-#             bufsize=1
-#         )
+        ngrok_process = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            startupinfo=startupinfo,
+            creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == 'win32' else 0,
+            cwd=os.path.dirname(exe_path),
+            text=True,
+            bufsize=1
+        )
         
-#         print("[TEST] Waiting for ngrok tunnel...")
-#         public_url = None
-#         for i in range(30):
-#             time.sleep(1)
-#             public_url = get_ngrok_url()
-#             if public_url:
-#                 break
-#             if ngrok_process.poll() is not None:
-#                 print("[TEST] ERROR: Ngrok process died")
-#                 break
+        print("[TEST] Waiting for ngrok tunnel...")
+        public_url = None
+        for i in range(30):
+            time.sleep(1)
+            public_url = get_ngrok_url()
+            if public_url:
+                break
+            if ngrok_process.poll() is not None:
+                print("[TEST] ERROR: Ngrok process died")
+                break
         
-#         if public_url:
-#             print("\n" + "="*70)
-#             print("🌐 NGROK TUNNEL ESTABLISHED")
-#             print("="*70)
-#             print(f"Public URL: {public_url}")
-#             print(f"Remote Desktop: {public_url}/rd/")
-#             print(f"File Manager: {public_url}/fm/")
-#             print(f"Password: {TEST_PASSWORD}")
-#             print("="*70 + "\n")
+        if public_url:
+            print("\n" + "="*70)
+            print("🌐 NGROK TUNNEL ESTABLISHED")
+            print("="*70)
+            print(f"Public URL: {public_url}")
+            print(f"Remote Desktop: {public_url}/rd/")
+            print(f"File Manager: {public_url}/fm/")
+            print(f"Password: {TEST_PASSWORD}")
+            print("="*70 + "\n")
             
-#             try:
-#                 status_file = os.path.join(tempfile.gettempdir(), 'warworm_status.json')
-#                 with open(status_file, 'w') as f:
-#                     json.dump({
-#                         'rmm': {
-#                             'url': public_url,
-#                             'port': TEST_PORT,
-#                             'remote_desktop': f"{public_url}/rd/",
-#                             'file_manager': f"{public_url}/fm/",
-#                             'password': TEST_PASSWORD,
-#                             'timestamp': datetime.now().isoformat()
-#                         }
-#                     }, f, indent=2)
-#                 print(f"[TEST] Status saved to: {status_file}")
-#             except Exception as e:
-#                 print(f"[TEST] Status save error: {e}")
-#         else:
-#             print("[TEST] WARNING: Ngrok URL not available - running local only")
+            try:
+                status_file = os.path.join(tempfile.gettempdir(), 'warworm_status.json')
+                with open(status_file, 'w') as f:
+                    json.dump({
+                        'rmm': {
+                            'url': public_url,
+                            'port': TEST_PORT,
+                            'remote_desktop': f"{public_url}/rd/",
+                            'file_manager': f"{public_url}/fm/",
+                            'password': TEST_PASSWORD,
+                            'timestamp': datetime.now().isoformat()
+                        }
+                    }, f, indent=2)
+                print(f"[TEST] Status saved to: {status_file}")
+            except Exception as e:
+                print(f"[TEST] Status save error: {e}")
+        else:
+            print("[TEST] WARNING: Ngrok URL not available - running local only")
     
-#     running = True
-#     threading.Thread(target=encoder_thread, daemon=True).start()
-#     print("[TEST] Screen capture started")
+    running = True
+    threading.Thread(target=encoder_thread, daemon=True).start()
+    print("[TEST] Screen capture started")
     
-#     app = create_app(test_config)
+    app = create_app(test_config)
     
-#     print("\n" + "="*70)
-#     print("🚀 SECURE SERVER STARTED")
-#     print("="*70)
-#     print(f"Local URL: http://127.0.0.1:{TEST_PORT}/")
-#     print(f"Remote Desktop: http://127.0.0.1:{TEST_PORT}/rd/")
-#     print(f"File Manager: http://127.0.0.1:{TEST_PORT}/fm/")
-#     print(f"Password: {TEST_PASSWORD}")
-#     print("="*70)
-#     print("Press CTRL+C to stop")
-#     print("="*70 + "\n")
+    print("\n" + "="*70)
+    print("🚀 SECURE SERVER STARTED")
+    print("="*70)
+    print(f"Local URL: http://127.0.0.1:{TEST_PORT}/")
+    print(f"Remote Desktop: http://127.0.0.1:{TEST_PORT}/rd/")
+    print(f"File Manager: http://127.0.0.1:{TEST_PORT}/fm/")
+    print(f"Password: {TEST_PASSWORD}")
+    print("="*70)
+    print("Press CTRL+C to stop")
+    print("="*70 + "\n")
     
-#     try:
-#         from werkzeug.serving import run_simple
-#         run_simple('127.0.0.1', TEST_PORT, app, threaded=True, use_reloader=False)
-#     except KeyboardInterrupt:
-#         cleanup()
+    try:
+        from werkzeug.serving import run_simple
+        run_simple('127.0.0.1', TEST_PORT, app, threaded=True, use_reloader=False)
+    except KeyboardInterrupt:
+        cleanup()
