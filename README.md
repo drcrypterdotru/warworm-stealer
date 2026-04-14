@@ -15,7 +15,7 @@
 **Warworm Stealer** is a simple as another stealer using for collecting many information details of pc, browser password, data, crypto wallet, many useful information but in this part I have combine idea with worm on networking (LAN)
 that helpful you understanding security research framework designed for **authorized penetration testing**, **cybersecurity education**, and **threat simulation**. It represents a sophisticated implementation of modern information gathering and lateral movement techniques commonly observed in advanced persistent threats (APTs), packaged within an accessible web-based builder interface (Easy to use).
 
-<img src="screenshots/webui_1.png" alt="Screenshot_1">
+<img src="screenshots/webui_2.png" alt="Demo">
 
 ---
 
