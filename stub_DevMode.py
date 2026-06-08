@@ -49,6 +49,25 @@ except ImportError as e:
 def html_escape(text):
     return text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;')
 
+
+ 
+
+# --- Global exception handler for debug (writes to %TEMP%\warworm_crash.log) ---
+def _global_exception_handler(exc_type, exc_value, exc_tb):
+    try:
+        log_dir = os.environ.get('TEMP', os.getcwd())
+        log_file = os.path.join(log_dir, 'warworm_crash.log')
+        with open(log_file, 'a', encoding='utf-8') as f:
+            f.write(f"\n{'='*60}\n")
+            f.write(f"CRASH at {datetime.now()}\n")
+            f.write(f"Exception: {exc_type.__name__}: {exc_value}\n")
+            traceback.print_tb(exc_tb, file=f)
+            f.write(f"{'='*60}\n")
+    except:
+        pass
+
+sys.excepthook = _global_exception_handler
+
 # ==================== CONFIG (will be replaced by builder) ====================
 CONFIG = {
     "version": "1.3.0",

